@@ -1,12 +1,13 @@
+import { AbstractEntity } from 'src/common/base/entity.base';
 import { UserRole } from 'src/common/enums/user-roles.enum';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({ name: 'users' })
-export class User {
+export class User extends AbstractEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'full_name', nullable: true })
   fullName?: string;
 
   @Column({ unique: true })
@@ -21,19 +22,22 @@ export class User {
   @Column({ nullable: true })
   phone?: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'profile_picture', nullable: true })
   profilePicture?: string;
 
-  @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
+  @Column({
+    type: 'enum',
+    enum: UserRole,
+    default: UserRole.USER,
+    nullable: false,
+  })
   role: UserRole;
 
-  @Column({ nullable: true })
+  @Column({ name: 'refresh_token', nullable: true })
   refreshToken: string;
 
-  @Column({ default: false })
-  isActive: boolean;
-
   constructor(partial: Partial<User>) {
+    super();
     Object.assign(this, partial);
   }
 }

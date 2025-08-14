@@ -7,7 +7,7 @@ export const mongodbConfigFactory = (
   type: 'mongodb',
   url: configService.get('mongodb.uri'),
   database: configService.get('mongodb.dbName'),
-  entities: [__dirname + '/**/*.schema{.ts,.js}'],
+  entities: [__dirname + '/../../modules/**/*.schema{.ts,.js}'],
   synchronize: true,
   logging: true,
   logger: 'advanced-console',

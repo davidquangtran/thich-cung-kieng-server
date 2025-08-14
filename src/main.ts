@@ -5,8 +5,14 @@ import { GlobalHttpExceptionFilter } from './common/filters/global-exception.fil
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.useGlobalFilters(new GlobalHttpExceptionFilter());
   const config = app.get(ConfigService);
+  app.useGlobalFilters(new GlobalHttpExceptionFilter());
+  app.useLogger(
+    config.get<string>('server.port') === 'production'
+      ? ['error', 'warn', 'log']
+      : ['error', 'warn', 'log', 'debug', 'verbose'],
+  );
+  app.setGlobalPrefix('api/v1');
   await app.listen(config.get<string>('server.port') || 3000);
 }
 bootstrap();

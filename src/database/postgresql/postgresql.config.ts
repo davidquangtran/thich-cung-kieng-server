@@ -10,7 +10,7 @@ export const postgresConfigFactory = (
   username: configService.get<string>('postgres.username'),
   password: configService.get<string>('postgres.password'),
   database: configService.get<string>('postgres.name'),
-  entities: [__dirname + '/**/*.entity{.ts,.js}'],
+  entities: [__dirname + '/../../modules/**/*.entity{.ts,.js}'],
   synchronize: true,
   logging: true,
   logger: 'advanced-console',

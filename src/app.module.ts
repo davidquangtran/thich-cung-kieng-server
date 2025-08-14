@@ -10,6 +10,7 @@ import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { GlobalHttpExceptionFilter } from './common/filters/global-exception.filter';
 import { GlobalAuthGuard } from './common/guards/global-auth.guard';
 import { JwtModule } from '@nestjs/jwt';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { JwtModule } from '@nestjs/jwt';
     AuthModule,
     MailModule,
     JwtModule,
+    UserModule,
   ],
   controllers: [],
   providers: [
