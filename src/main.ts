@@ -1,12 +1,18 @@
 import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
-import { GlobalHttpExceptionFilter } from './common/filters/global-exception.filter';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService);
-  app.useGlobalFilters(new GlobalHttpExceptionFilter());
+  app.enableCors({
+    origin: config.get<string>('server.clientUrl') || 'http://localhost:3000',
+    credentials: true,
+  });
+  app.useGlobalPipes();
+  app.useGlobalInterceptors();
+  app.useGlobalFilters(new GlobalExceptionFilter());
   app.useLogger(
     config.get<string>('server.port') === 'production'
       ? ['error', 'warn', 'log']
