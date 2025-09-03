@@ -7,9 +7,9 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
-import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { ROLES_KEY } from '../decorators/roles.decorator';
+import { JwtService } from 'src/modules/auth/jwt/jwt.service';
 
 @Injectable()
 export class GlobalAuthGuard implements CanActivate {
@@ -32,20 +32,14 @@ export class GlobalAuthGuard implements CanActivate {
 
     try {
       // Xác thực token bằng JwtService tùy chỉnh
-      const payload = await this.jwtService.verify(token);
+      const payload = await this.jwtService.verifyToken(token);
 
       // Gán thông tin người dùng vào request
       request['user'] = {
         id: payload.sub,
         email: payload.email,
         role: payload.role,
-        isActive: payload.isActive,
       };
-
-      // Kiểm tra xem người dùng đã xác minh hay chưa
-      if (!request['user'].isActive) {
-        throw new UnauthorizedException('Người dùng chưa được xác minh');
-      }
 
       if (
         checkDecorators.requiredRoles &&

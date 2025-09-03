@@ -10,6 +10,7 @@ import {
 import { buildCacheKey } from '../utils/build-cache-key.util';
 import {
   CACHE_FIELD_DETAIL,
+  CACHE_FIELD_FIND_OPTIONS,
   CACHE_FIELD_LIST_ALL_FILTER,
   CACHE_FIELD_SELECT_OPTIONS,
   CACHE_NAMESPACE,
@@ -134,6 +135,29 @@ export abstract class BaseService<T extends AbstractEntity> {
       return result;
     } catch (error) {
       this.logger.error(`Error finding all ${this.getEntityName()}:`, error);
+      throw error;
+    }
+  }
+
+  async findByOption(options: FindOptionsWhere<T>): Promise<T | null> {
+    try {
+      const cacheKey = this.getCacheKey({
+        identifier: JSON.stringify(options),
+        field: CACHE_FIELD_FIND_OPTIONS,
+      });
+      const cached = await this.redis.get<T>(cacheKey);
+      if (cached) return cached;
+
+      const result = await this.repository.findOne({
+        where: { ...options, deletedAt: null } as any as FindOptionsWhere<T>,
+      });
+      if (result) await this.redis.set(cacheKey, result, TTL_SECONDS);
+      return result;
+    } catch (error) {
+      this.logger.error(
+        `Error finding ${this.getEntityName()} by options:`,
+        error,
+      );
       throw error;
     }
   }
