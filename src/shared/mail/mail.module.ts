@@ -11,7 +11,7 @@ import { MailService } from './mail.service';
       imports: [ConfigModule],
       useFactory: async (config: ConfigService) => ({
         transport: {
-          host: config.get<string>('mail.host', 'smtp.gmail.com'),
+          host: config.get<string>('mail.host'),
           port: config.get<number>('mail.port'),
           secure: false,
           auth: {
@@ -20,12 +20,10 @@ import { MailService } from './mail.service';
           },
         },
         defaults: {
-          from: `"ThichCungKieng" <${config.get('mail.from', 'noreply@thichcungkieng.com')}>`,
+          from: `"ThichCungKieng" <${config.get<string>('mail.from')}>`,
         },
         template: {
-          dir: process.env.NODE_ENV === 'production' 
-            ? join(__dirname, 'templates')
-            : join(process.cwd(), 'src', 'shared', 'mail', 'templates'),
+          dir: join(process.cwd(), 'src', 'shared', 'mail', 'templates'),
           adapter: new HandlebarsAdapter(),
           options: {
             strict: true,
@@ -36,8 +34,7 @@ import { MailService } from './mail.service';
     }),
     ConfigModule,
   ],
-  controllers: [],
   providers: [MailService],
   exports: [MailService],
 })
-export class MailModule {}
+export class MailModule { }

@@ -20,7 +20,7 @@ export class AuthService {
     private readonly mailService: MailService,
     // private readonly emailQueueService: EmailQueueService,
     private readonly googleAuthService: GoogleAuthService,
-  ) {}
+  ) { }
   /**
    * Generate access and refresh tokens for the user
    * @param payload JWT payload containing user information
@@ -58,10 +58,10 @@ export class AuthService {
       );
       id = newUser.id;
 
-        this.mailService.sendWelcomeEmail({
-          email: user.email,
-          name: user.fullName || 'User',
-        });
+      this.mailService.sendWelcomeEmail({
+        email: user.email,
+        name: user.fullName,
+      });
     }
 
     if (!id) {
@@ -177,10 +177,10 @@ export class AuthService {
       id = newUser.id;
 
       // Send welcome email using queue
-        this.mailService.sendWelcomeEmail({
-          email: newUser.email,
-          name: newUser.fullName || 'User',
-        });
+      this.mailService.sendWelcomeEmail({
+        email: newUser.email,
+        name: newUser.fullName || 'User',
+      });
     }
 
     // Step 4: Generate tokens for our application
