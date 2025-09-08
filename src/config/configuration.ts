@@ -63,7 +63,9 @@ export default () => ({
   // JWT configuration
   jwt: {
     secret: process.env.JWT_SECRET,
-    expiresIn: process.env.JWT_EXPIRE_IN,
+    expireIn: process.env.JWT_EXPIRE_IN,
+    refreshSecret: process.env.JWT_REFRESH_SECRET,
+    refreshExpireIn: process.env.JWT_REFRESH_EXPIRE_IN,
   },
 
   // Google OAuth

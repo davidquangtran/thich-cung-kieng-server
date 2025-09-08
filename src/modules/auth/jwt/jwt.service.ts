@@ -7,21 +7,19 @@ export class JwtService {
   constructor(
     private readonly nestJwtService: NestJwtService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   async generateAccessToken(payload: any): Promise<string> {
     return this.nestJwtService.sign(payload, {
-      secret: this.configService.get<string>('jwt.secret') || 'defaultSecret',
-      expiresIn: this.configService.get<string>('jwt.expiresIn') || '1d',
+      secret: this.configService.get<string>('jwt.secret'),
+      expiresIn: this.configService.get<string>('jwt.expireIn'),
     });
   }
 
   async generateRefreshToken(payload: any): Promise<string> {
     return this.nestJwtService.sign(payload, {
-      secret:
-        this.configService.get<string>('jwt.refreshSecret') ||
-        'defaultRefreshSecret',
-      expiresIn: this.configService.get<string>('jwt.refreshExpiresIn') || '7d',
+      secret: this.configService.get<string>('jwt.refreshSecret'),
+      expiresIn: this.configService.get<string>('jwt.refreshExpireIn'),
     });
   }
 
