@@ -8,7 +8,7 @@ import { RedisService } from 'src/shared/redis/redis.service';
 @Injectable()
 export class UserService extends BaseService<User> {
   constructor(
-    @InjectRepository(User)
+    @InjectRepository(User, 'postgresql')
     private readonly userRepository: Repository<User>,
     private readonly redisService: RedisService,
   ) {

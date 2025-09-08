@@ -1,25 +1,46 @@
-import { NestFactory, Reflector } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { GlobalResponseInterceptor } from './common/interceptors/global-response.interceptor';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const config = app.get(ConfigService);
+  const configService = app.get(ConfigService);
   app.enableCors({
-    origin: config.get<string>('server.clientUrl') || 'http://localhost:3000',
+    origin: configService.get<string>('server.clientUrl') || 'http://localhost:3000',
     credentials: true,
   });
   app.useGlobalPipes();
   app.useGlobalInterceptors(new GlobalResponseInterceptor());
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.useLogger(
-    config.get<string>('server.port') === 'production'
+    configService.get<string>('server.port') === 'production'
       ? ['error', 'warn', 'log']
       : ['error', 'warn', 'log', 'debug', 'verbose'],
   );
   app.setGlobalPrefix('api/v1');
-  await app.listen(config.get<string>('server.port') || 3000);
+    // Setup Swagger
+  const configSwagger = new DocumentBuilder()
+    .setTitle('Thich Cung Kieng API')
+    .setDescription(
+      `
+Welcome to the API documentation for the **Thich Cung Kieng**, built with **NestJS**.
+
+This API powers various features and functionalities of the Thich Cung Kieng application.
+---
+`,
+    )
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+
+  const document = SwaggerModule.createDocument(app, configSwagger);
+  // Require BOTH headers when the guard is applied. In OpenAPI, putting both
+  // schemes inside one security object means they are required together (AND).
+  (document as any).security = [{ ApiKeyAuth: [], ApiSecretAuth: [] }];
+  SwaggerModule.setup('docs', app, document);
+  await app.listen(configService.get<string>('server.port') || 3000);
 }
 bootstrap();

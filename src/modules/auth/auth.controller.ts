@@ -29,7 +29,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   @Public()
   @Get('google')
@@ -115,7 +115,7 @@ export class AuthController {
     const response = await this.authService.googleLogin((req as any).user);
     if (!response) {
       return res.redirect(
-        `${this.configService.get<string>('FRONTEND_URL')}/auth/error`,
+        `${this.configService.get<string>('server.clientUrl')}/auth/error`,
       );
     }
 
@@ -129,14 +129,61 @@ export class AuthController {
     });
     res.setHeader(
       'Access-Control-Allow-Origin',
-      this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000',
+      this.configService.get<string>('server.clientUrl') || 'http://localhost:3000',
     );
     res.setHeader('Access-Control-Allow-Credentials', 'true');
 
     // // Redirect to frontend with access token
     res.redirect(
-      `${this.configService.get<string>('FRONTEND_URL')}/auth/callback?accessToken=${response.tokens.accessToken}`,
+      `${this.configService.get<string>('server.clientUrl')}/auth/callback?accessToken=${response.tokens.accessToken}`,
     );
+  }
+
+  @Public()
+  @Post('logout')
+  @ApiOperation({
+    summary: 'User logout',
+    description: 'Log out user and invalidate refresh token stored in cookies',
+  })
+  @ApiOkResponse({
+    description: 'Logout successful',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Logout successful' },
+      },
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Logout failed - refresh token not found or invalid',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Refresh token not found' },
+      },
+    },
+  })
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const refreshToken = req.cookies['refreshToken'];
+
+    if (!refreshToken) {
+      throw new BadRequestException('Refresh token not found');
+    }
+
+    if (!(await this.authService.logout(refreshToken))) {
+      throw new BadRequestException('Logout failed');
+    }
+
+    // Xoá cookie refresh token
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: this.configService.get<string>('server.env') === 'production',
+      sameSite: 'lax',
+    });
+    // Trả về thông báo thành công
+    return {
+      message: 'Logout successful',
+    };
   }
 
   @Public()
@@ -185,52 +232,5 @@ export class AuthController {
     res.json({
       accessToken: tokens.accessToken,
     });
-  }
-
-  @Public()
-  @Post('logout')
-  @ApiOperation({
-    summary: 'User logout',
-    description: 'Log out user and invalidate refresh token stored in cookies',
-  })
-  @ApiOkResponse({
-    description: 'Logout successful',
-    schema: {
-      type: 'object',
-      properties: {
-        message: { type: 'string', example: 'Logout successful' },
-      },
-    },
-  })
-  @ApiBadRequestResponse({
-    description: 'Logout failed - refresh token not found or invalid',
-    schema: {
-      type: 'object',
-      properties: {
-        message: { type: 'string', example: 'Refresh token not found' },
-      },
-    },
-  })
-  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const refreshToken = req.cookies['refreshToken'];
-
-    if (!refreshToken) {
-      throw new BadRequestException('Refresh token not found');
-    }
-
-    if (!(await this.authService.logout(refreshToken))) {
-      throw new BadRequestException('Logout failed');
-    }
-
-    // Xoá cookie refresh token
-    res.clearCookie('refreshToken', {
-      httpOnly: true,
-      secure: this.configService.get<string>('NODE_ENV') === 'production',
-      sameSite: 'lax',
-    });
-    // Trả về thông báo thành công
-    return {
-      message: 'Logout successful',
-    };
   }
 }

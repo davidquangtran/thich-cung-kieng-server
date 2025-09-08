@@ -10,12 +10,14 @@ import { Tokens } from './jwt/interfaces/token.interface';
 import { JwtService } from './jwt/jwt.service';
 import { User } from '../user/entities/user.entity';
 import { GoogleLoginDto } from './google/dto/google-auth.dto';
+import { MailService } from 'src/shared/mail/mail.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly usersService: UserService,
+    private readonly mailService: MailService,
     // private readonly emailQueueService: EmailQueueService,
     private readonly googleAuthService: GoogleAuthService,
   ) {}
@@ -56,10 +58,10 @@ export class AuthService {
       );
       id = newUser.id;
 
-      //   this.emailQueueService.sendWelcomeEmail({
-      //     email: user.email,
-      //     name: user.fullName || 'User',
-      //   });
+        this.mailService.sendWelcomeEmail({
+          email: user.email,
+          name: user.fullName || 'User',
+        });
     }
 
     if (!id) {
@@ -175,10 +177,10 @@ export class AuthService {
       id = newUser.id;
 
       // Send welcome email using queue
-      //   this.emailQueueService.sendWelcomeEmail({
-      //     email: newUser.email,
-      //     name: newUser.fullName || 'User',
-      //   });
+        this.mailService.sendWelcomeEmail({
+          email: newUser.email,
+          name: newUser.fullName || 'User',
+        });
     }
 
     // Step 4: Generate tokens for our application

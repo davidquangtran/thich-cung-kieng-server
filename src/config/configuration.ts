@@ -51,4 +51,25 @@ export default () => ({
       storageBucket: process.env.FIREBASE_STORAGE_BUCKET ?? '',
     },
   },
+  // Email configuration
+  mail: {
+    host: process.env.EMAIL_HOST,
+    port: process.env.EMAIL_PORT,
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD,
+    from: process.env.EMAIL_FROM,
+  },
+
+  // JWT configuration
+  jwt: {
+    secret: process.env.JWT_SECRET,
+    expiresIn: process.env.JWT_EXPIRE_IN,
+  },
+
+  // Google OAuth
+  google: {
+    clientId: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackUrl: process.env.GOOGLE_CALLBACK_URL,
+  },
 });

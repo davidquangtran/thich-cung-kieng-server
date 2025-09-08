@@ -5,9 +5,10 @@ import { JwtModule } from './jwt/jwt.module';
 import { UserModule } from '../user/user.module';
 import { GoogleStrategy } from './google/strategies/google.strategy';
 import { GoogleAuthService } from './google/services/google-auth.service';
+import { MailModule } from 'src/shared/mail/mail.module';
 
 @Module({
-  imports: [UserModule, JwtModule],
+  imports: [UserModule, JwtModule, MailModule],
   controllers: [AuthController],
   providers: [AuthService, GoogleStrategy, GoogleAuthService, AuthService],
   exports: [AuthService, GoogleAuthService],
