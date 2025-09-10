@@ -1,10 +1,20 @@
 import { AbstractEntity } from "src/common/base/entity.base";
-import { Entity, PrimaryGeneratedColumn } from "typeorm";
+import { CeremonyTag } from "src/modules/ceremony-tag/entities/ceremony-tag.entity";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: 'tags' })
 export class Tag extends AbstractEntity {
     @PrimaryGeneratedColumn('uuid')
     id: string;
+
+    @Column()
+    name: string;
+
+    @Column({ nullable: true })
+    description: string;
+
+    @OneToMany(() => CeremonyTag, (ceremonyTag) => ceremonyTag.tag, { cascade: true })
+    ceremonyTags: CeremonyTag[];
 
     constructor(partial: Partial<Tag>) {
         super();
