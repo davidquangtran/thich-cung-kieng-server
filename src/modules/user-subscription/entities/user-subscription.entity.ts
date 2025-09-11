@@ -1,15 +1,12 @@
 import { AbstractEntity } from "src/common/base/entity.base";
 import { UserSubscriptionStatus } from "src/common/enums/user-subscription-status.enum";
-import { PaymentSubscription } from "src/modules/payment-subscription/entities/payment-subscription.entity";
+import { Payment } from "src/modules/payment/entities/payment.entity";
 import { SubscriptionPlan } from "src/modules/subscription-plan/entities/subscription-plan.entity";
 import { User } from "src/modules/user/entities/user.entity";
-import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToOne, OneToOne } from "typeorm";
 
 @Entity({ name: 'user_subscriptions' })
 export class UserSubscription extends AbstractEntity {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
-
     @Column({ name: 'start_date', type: 'timestamp' })
     startDate: Date;
 
@@ -34,8 +31,8 @@ export class UserSubscription extends AbstractEntity {
     @ManyToOne(() => SubscriptionPlan, (subscriptionPlan) => subscriptionPlan.userSubscriptions)
     subscriptionPlan: SubscriptionPlan;
 
-    @OneToMany(() => PaymentSubscription, (paymentSubscription) => paymentSubscription.userSubscription, { cascade: true })
-    paymentSubscriptions: PaymentSubscription[];
+    @OneToOne(() => Payment, (payment) => payment.userSubscription)
+    payment: Payment;
 
     constructor(partial: Partial<UserSubscription>) {
         super();

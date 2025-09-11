@@ -1,13 +1,10 @@
 import { AbstractEntity } from "src/common/base/entity.base";
 import { Ceremony } from "src/modules/ceremony/entities/ceremony.entity";
 import { OfferingMedia } from "src/modules/offering-media/entities/offering-media.entity";
-import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToOne, OneToMany } from "typeorm";
 
 @Entity({ name: 'offerings' })
 export class Offering extends AbstractEntity {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
-
     @Column()
     name: string;
 

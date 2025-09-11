@@ -2,13 +2,10 @@ import { AbstractEntity } from 'src/common/base/entity.base';
 import { UserRole } from 'src/common/enums/user-roles.enum';
 import { Payment } from 'src/modules/payment/entities/payment.entity';
 import { UserSubscription } from 'src/modules/user-subscription/entities/user-subscription.entity';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 
 @Entity({ name: 'users' })
 export class User extends AbstractEntity {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
   @Column({ name: 'full_name', nullable: true })
   fullName?: string;
 

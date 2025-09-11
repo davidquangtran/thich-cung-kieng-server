@@ -8,8 +8,6 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: 'ceremonies' })
 export class Ceremony extends AbstractEntity {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
 
     @Column({ nullable: false })
     name: string;

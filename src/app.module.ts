@@ -48,4 +48,4 @@ import { JwtModule } from './modules/auth/jwt/jwt.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

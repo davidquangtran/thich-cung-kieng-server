@@ -1,12 +1,9 @@
 import { AbstractEntity } from "src/common/base/entity.base";
 import { PlanFeature } from "src/modules/plan-feature/entities/plan-feature.entity";
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, OneToMany } from "typeorm";
 
 @Entity({ name: 'subscription_features' })
 export class SubscriptionFeature extends AbstractEntity {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
-
     @Column()
     name: string;
 

@@ -2,15 +2,12 @@ import { AbstractEntity } from "src/common/base/entity.base";
 import { PaymentProvider } from "src/common/enums/payment-provider.enum";
 import { PaymentStatus } from "src/common/enums/payment-status.enum";
 import { PaymentLog } from "src/modules/payment-log/entities/payment-log.entity";
-import { PaymentSubscription } from "src/modules/payment-subscription/entities/payment-subscription.entity";
+import { UserSubscription } from "src/modules/user-subscription/entities/user-subscription.entity";
 import { User } from "src/modules/user/entities/user.entity";
-import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne } from "typeorm";
 
 @Entity({ name: 'payments' })
 export class Payment extends AbstractEntity {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
-
     @Column({ name: 'user_id' })
     userId: string;
 
@@ -32,11 +29,12 @@ export class Payment extends AbstractEntity {
     @OneToMany(() => PaymentLog, (paymentLog) => paymentLog.payment, { cascade: true })
     paymentLogs: PaymentLog[];
 
-    @OneToMany(() => PaymentSubscription, (paymentSubscription) => paymentSubscription.payment, { cascade: true })
-    paymentSubscriptions: PaymentSubscription[];
-
     @ManyToOne(() => User, (user) => user.payments)
     user: User;
+
+    @OneToOne(() => UserSubscription, (userSubscription) => userSubscription.payment)
+    @JoinColumn({ name: 'user_subscription_id' })
+    userSubscription: UserSubscription;
 
     constructor(partial: Partial<Payment>) {
         super();

@@ -1,18 +1,17 @@
-import { ApiProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import {
   BaseEntity,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
+  PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
 export abstract class AbstractEntity extends BaseEntity {
-  @ApiProperty({
-    description: 'Thời gian tạo bản ghi',
-    example: '2024-01-01T00:00:00.000Z',
-  })
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+  
   @CreateDateColumn({
     name: 'created_at',
     type: 'timestamp',
@@ -21,11 +20,6 @@ export abstract class AbstractEntity extends BaseEntity {
   })
   createdAt: Date;
 
-  @ApiProperty({
-    description: 'ID người tạo bản ghi',
-    example: 'uuid-string',
-    nullable: true,
-  })
   @Column({
     name: 'created_by',
     type: 'uuid',
@@ -34,10 +28,6 @@ export abstract class AbstractEntity extends BaseEntity {
   })
   createdBy: string;
 
-  @ApiProperty({
-    description: 'Thời gian cập nhật bản ghi lần cuối',
-    example: '2024-01-01T00:00:00.000Z',
-  })
   @UpdateDateColumn({
     name: 'updated_at',
     type: 'timestamp',
@@ -47,11 +37,6 @@ export abstract class AbstractEntity extends BaseEntity {
   })
   updatedAt: Date;
 
-  @ApiProperty({
-    description: 'ID người cập nhật bản ghi lần cuối',
-    example: 'uuid-string',
-    nullable: true,
-  })
   @Column({
     name: 'updated_by',
     type: 'uuid',
@@ -60,11 +45,6 @@ export abstract class AbstractEntity extends BaseEntity {
   })
   updatedBy: string;
 
-  @ApiProperty({
-    description: 'Thời gian xóa bản ghi (soft delete)',
-    example: '2024-01-01T00:00:00.000Z',
-    nullable: true,
-  })
   @DeleteDateColumn({
     name: 'deleted_at',
     type: 'timestamp',

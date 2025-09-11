@@ -1,13 +1,12 @@
-import { BuildCacheKeyOptions } from './../interfaces/build-cache-key-options.interface';
+import { BuildCacheKeyOptions } from '../../interfaces/build-cache-key-options.interface';
 import { RedisService } from 'src/shared/redis/redis.service';
 import {
   DeepPartial,
   FindOptionsWhere,
-  ObjectLiteral,
   Repository,
   SelectQueryBuilder,
 } from 'typeorm';
-import { buildCacheKey } from '../utils/build-cache-key.util';
+import { buildCacheKey } from '../../utils/build-cache-key.util';
 import {
   CACHE_FIELD_DETAIL,
   CACHE_FIELD_FIND_OPTIONS,
@@ -15,11 +14,11 @@ import {
   CACHE_FIELD_SELECT_OPTIONS,
   CACHE_NAMESPACE,
   TTL_SECONDS,
-} from '../constants/cache.constant';
-import { BaseFilterDto } from './dto/base-filter.dto';
-import { PaginatedResponseDto } from './dto/paginated-response.dto';
-import { Injectable, Logger } from '@nestjs/common';
-import { AbstractEntity } from './entity.base';
+} from '../../constants/cache.constant';
+import { BaseFilterDto } from '../dto/base-filter.dto';
+import { PaginatedResponseDto } from '../dto/paginated-response.dto';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { AbstractEntity } from '../entity.base';
 
 @Injectable()
 export abstract class BaseService<T extends AbstractEntity> {
@@ -139,7 +138,7 @@ export abstract class BaseService<T extends AbstractEntity> {
     }
   }
 
-  async findByOption(options: FindOptionsWhere<T>): Promise<T | null> {
+  async findByOptions(options: FindOptionsWhere<T>): Promise<T | null> {
     try {
       const cacheKey = this.getCacheKey({
         identifier: JSON.stringify(options),
@@ -206,9 +205,26 @@ export abstract class BaseService<T extends AbstractEntity> {
     }
   }
 
-  async create(data: DeepPartial<T>, relations: string[]): Promise<T> {
+  async create(createDto: DeepPartial<T>, relations: string[]): Promise<T> {
+
     try {
-      const entity = this.repository.create(data);
+      if (!createDto) throw new Error('Data to create is required');
+      this.logger.log(`Creating new ${this.getEntityName()}`);
+      const findBy = this.getDuplicateFields();
+      for (const field of findBy) {
+        const value = createDto[field];
+        if (!value) continue;
+
+        const isExisting = await this.findByOptions({
+          [field]: value,
+        } as any);
+        if (isExisting) {
+          throw new BadRequestException(
+            `${this.getEntityName()} with ${field} ${value} already exists`,
+          );
+        }
+      }
+      const entity = this.repository.create(createDto);
       return await this.repository.save(entity);
     } catch (error) {
       this.logger.error(`Error creating ${this.getEntityName()}:`, error);
@@ -333,5 +349,13 @@ export abstract class BaseService<T extends AbstractEntity> {
     const entityAlias = this.getEntityName().toLowerCase();
     const queryBuilder = this.repository.createQueryBuilder(entityAlias);
     return queryBuilder;
+  }
+
+  /**
+ * Get fields to check for duplicates
+ * @returns The fields to check for duplicates
+ */
+  protected getDuplicateFields(): string[] {
+    return [];
   }
 }

@@ -1,12 +1,9 @@
 import { AbstractEntity } from "src/common/base/entity.base";
 import { Payment } from "src/modules/payment/entities/payment.entity";
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToOne } from "typeorm";
 
 @Entity({ name: 'payment_logs' })
 export class PaymentLog extends AbstractEntity {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
-
     @Column()
     old_status: string;
 

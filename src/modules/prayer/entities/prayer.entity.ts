@@ -1,12 +1,9 @@
 import { AbstractEntity } from "src/common/base/entity.base";
 import { Ceremony } from "src/modules/ceremony/entities/ceremony.entity";
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToOne } from "typeorm";
 
 @Entity({ name: 'prayers' })
 export class Prayer extends AbstractEntity {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
-
     @Column()
     name: string;
 
