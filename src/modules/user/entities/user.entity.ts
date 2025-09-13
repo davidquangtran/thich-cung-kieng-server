@@ -1,6 +1,7 @@
 import { AbstractEntity } from 'src/common/base/entity.base';
-import { UserRole } from 'src/common/enums/user-roles.enum';
+import { UserRole } from 'src/common/enums/user.enum';
 import { Payment } from 'src/modules/payment/entities/payment.entity';
+import { UserEvent } from 'src/modules/user-event/entities/user-event.entity';
 import { UserSubscription } from 'src/modules/user-subscription/entities/user-subscription.entity';
 import { Column, Entity, OneToMany } from 'typeorm';
 
@@ -35,11 +36,17 @@ export class User extends AbstractEntity {
   @Column({ name: 'refresh_token', nullable: true })
   refreshToken: string;
 
-  @OneToMany(() => UserSubscription, (userSubscription) => userSubscription.user)
+  @OneToMany(
+    () => UserSubscription,
+    (userSubscription) => userSubscription.user,
+  )
   userSubscriptions: UserSubscription[];
 
   @OneToMany(() => Payment, (payment) => payment.user)
   payments: Payment[];
+
+  @OneToMany(() => UserEvent, (userEvent) => userEvent.user)
+  userEvents: UserEvent[];
 
   constructor(partial: Partial<User>) {
     super();

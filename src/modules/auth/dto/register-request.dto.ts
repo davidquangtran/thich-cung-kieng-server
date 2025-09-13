@@ -8,7 +8,7 @@ import {
   MinLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { UserRole } from 'src/common/enums/user-roles.enum';
+import { UserRole } from 'src/common/enums/user.enum';
 
 export class RegisterReqDto {
   @ApiProperty({

@@ -41,7 +41,7 @@ export class AuthService {
    * @returns Tokens object containing access and refresh tokens
    */
   async googleLogin(user: any): Promise<{ tokens: Tokens }> {
-    const existingUser = await this.usersService.findByOption({
+    const existingUser = await this.usersService.findByOptions({
       email: user.email,
     });
     let id = existingUser ? existingUser.id : null;
@@ -101,7 +101,7 @@ export class AuthService {
     if (!decoded || !decoded.sub || !decoded.email) {
       throw new UnauthorizedException('Invalid refresh token');
     }
-    const user = await this.usersService.findByOption({ email: decoded.email });
+    const user = await this.usersService.findByOptions({ email: decoded.email });
 
     if (!user || !user.refreshToken || refreshToken !== user.refreshToken) {
       throw new UnauthorizedException('Invalid refresh token or user');
@@ -132,7 +132,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    const user = await this.usersService.findByOption({ email: decoded.email });
+    const user = await this.usersService.findByOptions({ email: decoded.email });
     console.log('User found:', user);
     if (!user || !user.refreshToken || refreshToken !== user.refreshToken) {
       throw new UnauthorizedException('Invalid refresh token or user');
@@ -159,7 +159,7 @@ export class AuthService {
     }
 
     // Step 2: Find or create user in our system
-    const existingUser = await this.usersService.findByOption({
+    const existingUser = await this.usersService.findByOptions({
       email: googleUser.email,
     });
     let id = existingUser ? existingUser.id : null;

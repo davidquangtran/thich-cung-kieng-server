@@ -1,5 +1,5 @@
 import { AbstractEntity } from "src/common/base/entity.base";
-import { MediaType } from "src/common/enums/media-type.enum";
+import { MediaType } from "src/common/enums/media.enum";
 import { Ceremony } from "src/modules/ceremony/entities/ceremony.entity";
 import { Column, Entity, ManyToOne } from "typeorm";
 

@@ -1,10 +1,10 @@
 import { AbstractEntity } from "src/common/base/entity.base";
-import { CeremonyType } from "src/common/enums/ceremony-type.enum";
+import { CeremonyType } from "src/common/enums/ceremony.enum";
 import { CeremonyMedia } from "src/modules/ceremony-media/entities/ceremony-media.entity";
 import { CeremonyTag } from "src/modules/ceremony-tag/entities/ceremony-tag.entity";
 import { Offering } from "src/modules/offering/entities/offering.entity";
 import { Prayer } from "src/modules/prayer/entities/prayer.entity";
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, OneToMany } from "typeorm";
 
 @Entity({ name: 'ceremonies' })
 export class Ceremony extends AbstractEntity {

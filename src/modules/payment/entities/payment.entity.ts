@@ -1,6 +1,6 @@
 import { AbstractEntity } from "src/common/base/entity.base";
 import { PaymentProvider } from "src/common/enums/payment-provider.enum";
-import { PaymentStatus } from "src/common/enums/payment-status.enum";
+import { PaymentStatus } from "src/common/enums/payment.enum";
 import { PaymentLog } from "src/modules/payment-log/entities/payment-log.entity";
 import { UserSubscription } from "src/modules/user-subscription/entities/user-subscription.entity";
 import { User } from "src/modules/user/entities/user.entity";

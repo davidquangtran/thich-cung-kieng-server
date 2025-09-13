@@ -24,7 +24,7 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { UserRole } from 'src/common/enums/user-roles.enum';
+import { UserRole } from 'src/common/enums/user.enum';
 import { UserService } from './user.service';
 
 @ApiTags('Users')
@@ -71,7 +71,7 @@ export class UserController {
     description: 'User not found',
   })
   async getMe(@Req() req: Request & { user: { email: string } }) {
-    const user = await this.usersService.findByOption({ email: req.user.email });
+    const user = await this.usersService.findByOptions({ email: req.user.email });
     if (!user) {
       throw new Error('User not found');
     }
