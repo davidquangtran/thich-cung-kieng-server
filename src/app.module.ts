@@ -32,6 +32,7 @@ import { UserEventOfferingModule } from './modules/user_event_offering/user_even
 import { UserEventReminderModule } from './modules/user_event_reminder/user_event_reminder.module';
 import { UserSubscriptionModule } from './modules/user-subscription/user-subscription.module';
 import { RitualCategoryModule } from './modules/ritual-category/ritual-category.module';
+import { UserFavoriteRitualModule } from './modules/user-favorite-ritual/user-favorite-ritual.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { RitualCategoryModule } from './modules/ritual-category/ritual-category.
     UserEventOfferingModule,
     UserEventReminderModule,
     UserSubscriptionModule,
+    UserFavoriteRitualModule,
   ],
   controllers: [],
   providers: [

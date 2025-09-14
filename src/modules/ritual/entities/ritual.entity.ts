@@ -7,6 +7,7 @@ import { Prayer } from 'src/modules/prayer/entities/prayer.entity';
 import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
 import { RitualReview } from 'src/modules/ritual-review/entities/ritual-review.entity';
 import { RitualCategory } from 'src/modules/ritual-category/entities/ritual-category.entity';
+import { UserFavoriteRitual } from 'src/modules/user-favorite-ritual/entities/user-favorite-ritual.entity';
 
 @Entity({ name: 'rituals' })
 export class Ritual extends AbstractEntity {
@@ -68,6 +69,9 @@ export class Ritual extends AbstractEntity {
 
   @ManyToOne(() => RitualCategory, (ritualCategory) => ritualCategory.rituals)
   ritualCategory: RitualCategory;
+
+  @OneToMany(() => UserFavoriteRitual, (ufr) => ufr.ritual)
+  favoriteByUsers: UserFavoriteRitual[];
 
   constructor(partial: Partial<Ritual>) {
     super();
