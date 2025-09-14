@@ -8,11 +8,13 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
+import { Public } from 'src/common/decorators/public.decorator';
 import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
 
+@Public()
 @Controller('payment')
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}

@@ -8,11 +8,13 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
+import { Public } from 'src/common/decorators/public.decorator';
 import { RitualReviewService } from './ritual-review.service';
 import { CreateRitualReviewDto } from './dto/create-ritual-review.dto';
 import { UpdateRitualReviewDto } from './dto/update-ritual-review.dto';
-import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
+import { FilterRitualReviewDto } from './dto/filter-ritual-review.dto';
 
+@Public()
 @Controller('ritual-review')
 export class RitualReviewController {
   constructor(private readonly ritualReviewService: RitualReviewService) {}
@@ -23,7 +25,7 @@ export class RitualReviewController {
   }
 
   @Get()
-  findAll(@Query() filter: BaseFilterDto) {
+  findAll(@Query() filter: FilterRitualReviewDto) {
     return this.ritualReviewService.findAll(filter, [], []);
   }
 

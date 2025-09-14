@@ -8,11 +8,13 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
+import { Public } from 'src/common/decorators/public.decorator';
 import { PaymentLogService } from './payment-log.service';
 import { CreatePaymentLogDto } from './dto/create-payment-log.dto';
 import { UpdatePaymentLogDto } from './dto/update-payment-log.dto';
-import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
+import { FilterPaymentLogDto } from './dto/filter-payment-log.dto';
 
+@Public()
 @Controller('payment-log')
 export class PaymentLogController {
   constructor(private readonly paymentLogService: PaymentLogService) {}
@@ -23,7 +25,7 @@ export class PaymentLogController {
   }
 
   @Get()
-  findAll(@Query() filter: BaseFilterDto) {
+  findAll(@Query() filter: FilterPaymentLogDto) {
     return this.paymentLogService.findAll(filter, [], []);
   }
 

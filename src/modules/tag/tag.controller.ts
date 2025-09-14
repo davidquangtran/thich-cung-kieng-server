@@ -8,11 +8,13 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
+import { Public } from 'src/common/decorators/public.decorator';
 import { TagService } from './tag.service';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
 import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
 
+@Public()
 @Controller('tag')
 export class TagController {
   constructor(private readonly tagService: TagService) {}

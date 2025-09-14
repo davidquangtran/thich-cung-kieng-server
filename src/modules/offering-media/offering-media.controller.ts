@@ -8,11 +8,13 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
+import { Public } from 'src/common/decorators/public.decorator';
 import { OfferingMediaService } from './offering-media.service';
 import { CreateOfferingMediaDto } from './dto/create-offering-media.dto';
 import { UpdateOfferingMediaDto } from './dto/update-offering-media.dto';
-import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
+import { FilterOfferingMediaDto } from './dto/filter-offering-media.dto';
 
+@Public()
 @Controller('offering-media')
 export class OfferingMediaController {
   constructor(private readonly offeringMediaService: OfferingMediaService) {}
@@ -23,7 +25,7 @@ export class OfferingMediaController {
   }
 
   @Get()
-  findAll(@Query() filter: BaseFilterDto) {
+  findAll(@Query() filter: FilterOfferingMediaDto) {
     return this.offeringMediaService.findAll(filter, [], []);
   }
 

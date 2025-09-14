@@ -2,18 +2,24 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
-import { GlobalResponseInterceptor } from './common/interceptors/global-response.interceptor';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
   app.enableCors({
-    origin: configService.get<string>('server.clientUrl') || 'http://localhost:3000',
+    origin:
+      configService.get<string>('server.clientUrl') || 'http://localhost:3000',
     credentials: true,
   });
-  app.useGlobalPipes();
-  app.useGlobalInterceptors(new GlobalResponseInterceptor());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  );
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.useLogger(
     configService.get<string>('server.port') === 'production'
@@ -21,7 +27,7 @@ async function bootstrap() {
       : ['error', 'warn', 'log', 'debug', 'verbose'],
   );
   app.setGlobalPrefix('api/v1');
-    // Setup Swagger
+  // Setup Swagger
   const configSwagger = new DocumentBuilder()
     .setTitle('Thich Cung Kieng API')
     .setDescription(

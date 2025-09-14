@@ -2,8 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { BaseService } from 'src/common/base/service/service.base';
 import { UserEvent } from './entities/user-event.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { RedisService } from 'src/shared/redis/redis.service';
+import { FilterUserEvent } from './dto/filter-user-event.dto';
 
 @Injectable()
 export class UserEventService extends BaseService<UserEvent> {
@@ -25,5 +26,36 @@ export class UserEventService extends BaseService<UserEvent> {
 
   protected getSearchableFields(): string[] {
     return ['title', 'description', 'location'];
+  }
+
+  protected createQueryBuilder(
+    filter: FilterUserEvent,
+  ): SelectQueryBuilder<UserEvent> {
+    const queryBuilder =
+      this.userEventRepository.createQueryBuilder('userEvent');
+
+    // Apply soft delete filter by default
+    queryBuilder.andWhere('userEvent.deletedAt IS NULL');
+
+    // Apply filters if provided
+    if (filter.userId) {
+      queryBuilder.andWhere('userEvent.userId = :userId', {
+        userId: filter.userId,
+      });
+    }
+
+    if (filter.status) {
+      queryBuilder.andWhere('userEvent.status = :status', {
+        status: filter.status,
+      });
+    }
+
+    if (filter.eventDate) {
+      queryBuilder.andWhere('userEvent.eventDate = :eventDate', {
+        startDate: filter.eventDate,
+      });
+    }
+
+    return queryBuilder;
   }
 }

@@ -8,11 +8,13 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
+import { Public } from 'src/common/decorators/public.decorator';
 import { SubscriptionFeatureService } from './subscription-feature.service';
 import { CreateSubscriptionFeatureDto } from './dto/create-subscription-feature.dto';
 import { UpdateSubscriptionFeatureDto } from './dto/update-subscription-feature.dto';
 import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
 
+@Public()
 @Controller('subscription-feature')
 export class SubscriptionFeatureController {
   constructor(

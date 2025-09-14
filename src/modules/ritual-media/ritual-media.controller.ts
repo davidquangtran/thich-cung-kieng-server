@@ -8,11 +8,13 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
+import { Public } from 'src/common/decorators/public.decorator';
 import { RitualMediaService } from './ritual-media.service';
 import { CreateRitualMediaDto } from './dto/create-ritual-media.dto';
 import { UpdateRitualMediaDto } from './dto/update-ritual-media.dto';
-import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
+import { FilterRitualMediaDto } from './dto/filter-ritual-media.dto';
 
+@Public()
 @Controller('ritual-media')
 export class RitualMediaController {
   constructor(private readonly ritualMediaService: RitualMediaService) {}
@@ -23,7 +25,7 @@ export class RitualMediaController {
   }
 
   @Get()
-  findAll(@Query() filter: BaseFilterDto) {
+  findAll(@Query() filter: FilterRitualMediaDto) {
     return this.ritualMediaService.findAll(filter, [], []);
   }
 

@@ -4,8 +4,9 @@ import { UpdateOfferingDto } from './dto/update-offering.dto';
 import { Offering } from './entities/offering.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BaseService } from 'src/common/base/service/service.base';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { RedisService } from 'src/shared/redis/redis.service';
+import { FilterOfferingDto } from './dto/filter-offering.dto';
 
 @Injectable()
 export class OfferingService extends BaseService<Offering> {
@@ -25,6 +26,23 @@ export class OfferingService extends BaseService<Offering> {
   }
 
   protected getSearchableFields(): string[] {
-    return [];
+    return ['name', 'description'];
+  }
+
+  protected createQueryBuilder(
+    filter: FilterOfferingDto,
+  ): SelectQueryBuilder<Offering> {
+    const queryBuilder = this.offeringRepository.createQueryBuilder('offering');
+
+    // Apply soft delete filter by default
+    queryBuilder.andWhere('offering.deletedAt IS NULL');
+
+    if (filter.quantity) {
+      queryBuilder.andWhere('offering.quantity = :quantity', {
+        price: filter.quantity,
+      });
+    }
+
+    return queryBuilder;
   }
 }

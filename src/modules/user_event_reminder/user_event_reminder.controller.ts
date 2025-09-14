@@ -8,11 +8,13 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
+import { Public } from 'src/common/decorators/public.decorator';
 import { UserEventReminderService } from './user_event_reminder.service';
 import { CreateUserEventReminderDto } from './dto/create-user_event_reminder.dto';
 import { UpdateUserEventReminderDto } from './dto/update-user_event_reminder.dto';
 import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
 
+@Public()
 @Controller('user-event-reminder')
 export class UserEventReminderController {
   constructor(

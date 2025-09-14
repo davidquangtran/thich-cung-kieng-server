@@ -11,8 +11,10 @@ import {
 import { PrayerService } from './prayer.service';
 import { CreatePrayerDto } from './dto/create-prayer.dto';
 import { UpdatePrayerDto } from './dto/update-prayer.dto';
-import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
+import { Public } from 'src/common/decorators/public.decorator';
+import { FilterPaymentLogDto } from '../payment-log/dto/filter-payment-log.dto';
 
+@Public()
 @Controller('prayer')
 export class PrayerController {
   constructor(private readonly prayerService: PrayerService) {}
@@ -22,8 +24,9 @@ export class PrayerController {
     return this.prayerService.create(createPrayerDto);
   }
 
+  @Public()
   @Get()
-  findAll(@Query() filter: BaseFilterDto) {
+  findAll(@Query() filter: FilterPaymentLogDto) {
     return this.prayerService.findAll(filter, [], []);
   }
 

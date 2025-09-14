@@ -8,11 +8,13 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
+import { Public } from 'src/common/decorators/public.decorator';
 import { RitualTagService } from './ritual-tag.service';
 import { CreateRitualTagDto } from './dto/create-ritual-tag.dto';
 import { UpdateRitualTagDto } from './dto/update-ritual-tag.dto';
-import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
+import { FilterRitualTagDto } from './dto/filter-ritual-tag.dto';
 
+@Public()
 @Controller('ritual-tag')
 export class RitualTagController {
   constructor(private readonly ritualTagService: RitualTagService) {}
@@ -23,7 +25,7 @@ export class RitualTagController {
   }
 
   @Get()
-  findAll(@Query() filter: BaseFilterDto) {
+  findAll(@Query() filter: FilterRitualTagDto) {
     return this.ritualTagService.findAll(filter, [], []);
   }
 

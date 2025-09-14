@@ -18,6 +18,7 @@ export abstract class BaseService<
       if (!createDto) throw new Error('Data to create is required');
       const duplicateFields = this.getDuplicateFields();
       await this.checkDuplicateField(duplicateFields, createDto);
+      await this.validateCreateInput(createDto);
       const entity = this.repository.create(createDto);
       return await this.repository.save(entity);
     } catch (error) {

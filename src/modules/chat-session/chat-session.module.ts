@@ -4,9 +4,14 @@ import { ChatSessionService } from './chat-session.service';
 import { ChatSessionController } from './chat-session.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ChatSession } from './entities/chat-session.entity';
+import { UserModule } from '../user/user.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ChatSession], 'postgresql'), RedisModule],
+  imports: [
+    TypeOrmModule.forFeature([ChatSession], 'postgresql'),
+    RedisModule,
+    UserModule,
+  ],
   controllers: [ChatSessionController],
   providers: [ChatSessionService],
 })

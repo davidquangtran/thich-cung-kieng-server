@@ -8,11 +8,13 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
+import { Public } from 'src/common/decorators/public.decorator';
 import { UserEventService } from './user-event.service';
 import { CreateUserEventDto } from './dto/create-user-event.dto';
 import { UpdateUserEventDto } from './dto/update-user-event.dto';
 import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
 
+@Public()
 @Controller('user-event')
 export class UserEventController {
   constructor(private readonly userEventService: UserEventService) {}

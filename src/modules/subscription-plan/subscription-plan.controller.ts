@@ -8,11 +8,13 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
+import { Public } from 'src/common/decorators/public.decorator';
 import { SubscriptionPlanService } from './subscription-plan.service';
 import { CreateSubscriptionPlanDto } from './dto/create-subscription-plan.dto';
 import { UpdateSubscriptionPlanDto } from './dto/update-subscription-plan.dto';
-import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
+import { FilterSubscriptionPlanDto } from './dto/filter-subscription-plan.dto';
 
+@Public()
 @Controller('subscription-plan')
 export class SubscriptionPlanController {
   constructor(
@@ -25,7 +27,7 @@ export class SubscriptionPlanController {
   }
 
   @Get()
-  findAll(@Query() filter: BaseFilterDto) {
+  findAll(@Query() filter: FilterSubscriptionPlanDto) {
     return this.subscriptionPlanService.findAll(filter, [], []);
   }
 

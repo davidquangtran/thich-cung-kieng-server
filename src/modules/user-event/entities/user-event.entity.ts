@@ -18,7 +18,7 @@ export class UserEvent extends AbstractEntity {
   description: string;
   @Column()
   location: string;
-  @Column({ name: 'event_date', type: 'timestamptz' })
+  @Column({ name: 'event_date' })
   eventDate: Date;
   @Column({
     name: 'repeat_rule',

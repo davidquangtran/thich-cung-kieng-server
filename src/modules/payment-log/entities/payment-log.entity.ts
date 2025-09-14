@@ -1,30 +1,37 @@
-import { AbstractEntity } from "src/common/base/entity.base";
-import { Payment } from "src/modules/payment/entities/payment.entity";
-import { Column, Entity, ManyToOne } from "typeorm";
+import { AbstractEntity } from 'src/common/base/entity.base';
+import { PaymentStatus } from 'src/common/enums/payment.enum';
+import { Payment } from 'src/modules/payment/entities/payment.entity';
+import { Column, Entity, ManyToOne } from 'typeorm';
 
 @Entity({ name: 'payment_logs' })
 export class PaymentLog extends AbstractEntity {
-    @Column()
-    old_status: string;
+  @Column({
+    name: 'old_status',
+    type: 'enum',
+    enum: PaymentStatus,
+    default: PaymentStatus.PENDING,
+  })
+  oldStatus: PaymentStatus.PENDING;
 
-    @Column()
-    new_status: string;
+  @Column({
+    name: 'new_status',
+    type: 'enum',
+    enum: PaymentStatus,
+    default: PaymentStatus.COMPLETED,
+  })
+  newStatus: PaymentStatus.COMPLETED;
 
-    @Column()
-    description: string;
+  @Column()
+  description: string;
 
-    @Column()
-    logged_at: Date;
+  @Column({ name: 'payment_id' })
+  paymentId: string;
 
-    @Column({ name: 'payment_id' })
-    paymentId: string;
+  @ManyToOne(() => Payment, (payment) => payment.paymentLogs)
+  payment: Payment;
 
-    @ManyToOne(() => Payment, (payment) => payment.paymentLogs)
-    payment: Payment;
-
-
-    constructor(partial: Partial<PaymentLog>) {
-        super();
-        Object.assign(this, partial);
-    }
+  constructor(partial: Partial<PaymentLog>) {
+    super();
+    Object.assign(this, partial);
+  }
 }

@@ -8,11 +8,14 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
+import { Public } from 'src/common/decorators/public.decorator';
 import { PlanFeatureService } from './plan-feature.service';
 import { CreatePlanFeatureDto } from './dto/create-plan-feature.dto';
 import { UpdatePlanFeatureDto } from './dto/update-plan-feature.dto';
 import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
+import { FilterPlanFeatureDto } from './dto/filter-plan-feature.dto';
 
+@Public()
 @Controller('plan-feature')
 export class PlanFeatureController {
   constructor(private readonly planFeatureService: PlanFeatureService) {}
@@ -23,7 +26,7 @@ export class PlanFeatureController {
   }
 
   @Get()
-  findAll(@Query() filter: BaseFilterDto) {
+  findAll(@Query() filter: FilterPlanFeatureDto) {
     return this.planFeatureService.findAll(filter, [], []);
   }
 

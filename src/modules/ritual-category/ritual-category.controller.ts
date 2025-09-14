@@ -8,11 +8,13 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
+import { Public } from 'src/common/decorators/public.decorator';
 import { RitualCategoryService } from './ritual-category.service';
 import { CreateRitualCategoryDto } from './dto/create-ritual-category.dto';
 import { UpdateRitualCategoryDto } from './dto/update-ritual-category.dto';
-import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
+import { FilterRitualCategoryDto } from './dto/filter-ritual-category.dto';
 
+@Public()
 @Controller('ritual-category')
 export class RitualCategoryController {
   constructor(private readonly ritualCategoryService: RitualCategoryService) {}
@@ -23,7 +25,7 @@ export class RitualCategoryController {
   }
 
   @Get()
-  findAll(@Query() filter: BaseFilterDto) {
+  findAll(@Query() filter: FilterRitualCategoryDto) {
     return this.ritualCategoryService.findAll(filter, [], []);
   }
 

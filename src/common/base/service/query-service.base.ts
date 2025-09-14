@@ -300,7 +300,8 @@ export abstract class QueryServiceBase<T extends AbstractEntity> {
    * @param filter The filter object
    */
   protected createQueryBuilder(filter: any): SelectQueryBuilder<T> {
-    const entityAlias = this.getEntityName().toLowerCase();
+    const entityName = this.getEntityName();
+    const entityAlias = entityName.toLowerCase();
     const queryBuilder = this.repository.createQueryBuilder(entityAlias);
     return queryBuilder;
   }

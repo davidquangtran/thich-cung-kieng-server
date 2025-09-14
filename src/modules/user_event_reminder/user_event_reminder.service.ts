@@ -3,7 +3,7 @@ import { CreateUserEventReminderDto } from './dto/create-user_event_reminder.dto
 import { UpdateUserEventReminderDto } from './dto/update-user_event_reminder.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEventReminder } from './entities/user_event_reminder.entity';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { RedisService } from 'src/shared/redis/redis.service';
 import { BaseService } from 'src/common/base/service/service.base';
 
@@ -27,5 +27,46 @@ export class UserEventReminderService extends BaseService<UserEventReminder> {
 
   protected getSearchableFields(): string[] {
     return ['status', 'notifyMethod'];
+  }
+
+  protected createQueryBuilder(
+    keyword?: string,
+    filters?: Record<string, any>,
+  ): SelectQueryBuilder<UserEventReminder> {
+    const queryBuilder = this.userEventReminderRepository
+      .createQueryBuilder('userEventReminder')
+      .where('userEventReminder.deletedAt IS NULL');
+
+    if (keyword) {
+      const searchableFields = this.getSearchableFields();
+      if (searchableFields.length > 0) {
+        const searchConditions = searchableFields
+          .map((field) => `userEventReminder.${field} ILIKE :keyword`)
+          .join(' OR ');
+        queryBuilder.andWhere(`(${searchConditions})`, {
+          keyword: `%${keyword}%`,
+        });
+      }
+    }
+
+    if (filters?.userEventId) {
+      queryBuilder.andWhere('userEventReminder.userEventId = :userEventId', {
+        userEventId: filters.userEventId,
+      });
+    }
+
+    if (filters?.status) {
+      queryBuilder.andWhere('userEventReminder.status = :status', {
+        status: filters.status,
+      });
+    }
+
+    if (filters?.notifyMethod) {
+      queryBuilder.andWhere('userEventReminder.notifyMethod = :notifyMethod', {
+        notifyMethod: filters.notifyMethod,
+      });
+    }
+
+    return queryBuilder;
   }
 }
