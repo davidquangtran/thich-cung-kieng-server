@@ -31,6 +31,7 @@ import { UserEventModule } from './modules/user-event/user-event.module';
 import { UserEventOfferingModule } from './modules/user_event_offering/user_event_offering.module';
 import { UserEventReminderModule } from './modules/user_event_reminder/user_event_reminder.module';
 import { UserSubscriptionModule } from './modules/user-subscription/user-subscription.module';
+import { RitualCategoryModule } from './modules/ritual-category/ritual-category.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { UserSubscriptionModule } from './modules/user-subscription/user-subscri
     RitualModule,
     RitualMediaModule,
     RitualTagModule,
+    RitualCategoryModule,
     OfferingModule,
     OfferingMediaModule,
     PaymentModule,
