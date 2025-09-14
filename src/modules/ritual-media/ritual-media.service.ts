@@ -1,26 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { CreateRitualMediaDto } from './dto/create-ritual-media.dto';
-import { UpdateRitualMediaDto } from './dto/update-ritual-media.dto';
+import { BaseService } from 'src/common/base/service/service.base';
+import { RitualMedia } from './entities/ritual-media.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { RedisService } from 'src/shared/redis/redis.service';
 
 @Injectable()
-export class RitualMediaService {
-  create(createRitualMediaDto: CreateRitualMediaDto) {
-    return 'This action adds a new ritualMedia';
+export class RitualMediaService extends BaseService<RitualMedia> {
+  constructor(
+    @InjectRepository(RitualMedia, 'postgresql')
+    private readonly ritualMediaRepository: Repository<RitualMedia>,
+    private readonly redisService: RedisService,
+  ) {
+    super(ritualMediaRepository, redisService);
   }
 
-  findAll() {
-    return `This action returns all ritualMedia`;
+  protected getDuplicateFields(): string[] {
+    return [];
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} ritualMedia`;
+  protected getDefaultRelations(): string[] {
+    return ['ritual'];
   }
 
-  update(id: number, updateRitualMediaDto: UpdateRitualMediaDto) {
-    return `This action updates a #${id} ritualMedia`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} ritualMedia`;
+  protected getSearchableFields(): string[] {
+    return ['url', 'alt'];
   }
 }

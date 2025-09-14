@@ -14,4 +14,16 @@ export class UserService extends BaseService<User> {
   ) {
     super(userRepository, redisService);
   }
+
+  protected getDuplicateFields(): string[] {
+    return ['email'];
+  }
+
+  protected getDefaultRelations(): string[] {
+    return ['userSubscriptions', 'chatSession'];
+  }
+
+  protected getSearchableFields(): string[] {
+    return ['email', 'fullName', 'phone'];
+  }
 }

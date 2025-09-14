@@ -1,26 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { CreateRitualTagDto } from './dto/create-ritual-tag.dto';
-import { UpdateRitualTagDto } from './dto/update-ritual-tag.dto';
+import { BaseService } from 'src/common/base/service/service.base';
+import { RitualTag } from './entities/ritual-tag.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { RedisService } from 'src/shared/redis/redis.service';
 
 @Injectable()
-export class RitualTagService {
-  create(createRitualTagDto: CreateRitualTagDto) {
-    return 'This action adds a new ritualTag';
+export class RitualTagService extends BaseService<RitualTag> {
+  constructor(
+    @InjectRepository(RitualTag, 'postgresql')
+    private readonly ritualTagRepository: Repository<RitualTag>,
+    private readonly redisService: RedisService,
+  ) {
+    super(ritualTagRepository, redisService);
   }
 
-  findAll() {
-    return `This action returns all ritualTag`;
+  protected getDuplicateFields(): string[] {
+    return ['ritualId', 'tagId'];
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} ritualTag`;
+  protected getDefaultRelations(): string[] {
+    return ['ritual', 'tag'];
   }
 
-  update(id: number, updateRitualTagDto: UpdateRitualTagDto) {
-    return `This action updates a #${id} ritualTag`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} ritualTag`;
+  protected getSearchableFields(): string[] {
+    return [];
   }
 }

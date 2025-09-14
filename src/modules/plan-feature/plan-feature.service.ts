@@ -1,26 +1,31 @@
 import { Injectable } from '@nestjs/common';
 import { CreatePlanFeatureDto } from './dto/create-plan-feature.dto';
 import { UpdatePlanFeatureDto } from './dto/update-plan-feature.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { PlanFeature } from './entities/plan-feature.entity';
+import { Repository } from 'typeorm';
+import { RedisService } from 'src/shared/redis/redis.service';
+import { BaseService } from 'src/common/base/service/service.base';
 
 @Injectable()
-export class PlanFeatureService {
-  create(createPlanFeatureDto: CreatePlanFeatureDto) {
-    return 'This action adds a new planFeature';
+export class PlanFeatureService extends BaseService<PlanFeature> {
+  constructor(
+    @InjectRepository(PlanFeature, 'postgresql')
+    private readonly planFeatureRepository: Repository<PlanFeature>,
+    private readonly redisService: RedisService,
+  ) {
+    super(planFeatureRepository, redisService);
   }
 
-  findAll() {
-    return `This action returns all planFeature`;
+  protected getDuplicateFields(): string[] {
+    return ['subscriptionPlanId', 'subscriptionFeatureId'];
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} planFeature`;
+  protected getDefaultRelations(): string[] {
+    return ['subscriptionPlan', 'subscriptionFeature'];
   }
 
-  update(id: number, updatePlanFeatureDto: UpdatePlanFeatureDto) {
-    return `This action updates a #${id} planFeature`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} planFeature`;
+  protected getSearchableFields(): string[] {
+    return ['subscriptionPlanId', 'subscriptionFeatureId'];
   }
 }

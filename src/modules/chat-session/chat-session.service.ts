@@ -1,26 +1,31 @@
 import { Injectable } from '@nestjs/common';
 import { CreateChatSessionDto } from './dto/create-chat-session.dto';
 import { UpdateChatSessionDto } from './dto/update-chat-session.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { ChatSession } from './entities/chat-session.entity';
+import { Repository } from 'typeorm';
+import { RedisService } from 'src/shared/redis/redis.service';
+import { BaseService } from 'src/common/base/service/service.base';
 
 @Injectable()
-export class ChatSessionService {
-  create(createChatSessionDto: CreateChatSessionDto) {
-    return 'This action adds a new chatSession';
+export class ChatSessionService extends BaseService<ChatSession> {
+  constructor(
+    @InjectRepository(ChatSession, 'postgresql')
+    private readonly chatSessionRepository: Repository<ChatSession>,
+    private readonly redisService: RedisService,
+  ) {
+    super(chatSessionRepository, redisService);
   }
 
-  findAll() {
-    return `This action returns all chatSession`;
+  protected getDuplicateFields(): string[] {
+    return ['userId'];
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} chatSession`;
+  protected getDefaultRelations(): string[] {
+    return ['user', 'messages'];
   }
 
-  update(id: number, updateChatSessionDto: UpdateChatSessionDto) {
-    return `This action updates a #${id} chatSession`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} chatSession`;
+  protected getSearchableFields(): string[] {
+    return ['id'];
   }
 }

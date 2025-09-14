@@ -1,26 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { CreatePrayerDto } from './dto/create-prayer.dto';
-import { UpdatePrayerDto } from './dto/update-prayer.dto';
+import { BaseService } from 'src/common/base/service/service.base';
+import { Prayer } from './entities/prayer.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { RedisService } from 'src/shared/redis/redis.service';
 
 @Injectable()
-export class PrayerService {
-  create(createPrayerDto: CreatePrayerDto) {
-    return 'This action adds a new prayer';
+export class PrayerService extends BaseService<Prayer> {
+  constructor(
+    @InjectRepository(Prayer, 'postgresql')
+    private readonly prayerRepository: Repository<Prayer>,
+    private readonly redisService: RedisService,
+  ) {
+    super(prayerRepository, redisService);
   }
 
-  findAll() {
-    return `This action returns all prayer`;
+  protected getDuplicateFields(): string[] {
+    return ['name'];
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} prayer`;
+  protected getDefaultRelations(): string[] {
+    return ['ritual'];
   }
 
-  update(id: number, updatePrayerDto: UpdatePrayerDto) {
-    return `This action updates a #${id} prayer`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} prayer`;
+  protected getSearchableFields(): string[] {
+    return ['name', 'content', 'description'];
   }
 }

@@ -1,11 +1,23 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import { SubscriptionPlanService } from './subscription-plan.service';
 import { CreateSubscriptionPlanDto } from './dto/create-subscription-plan.dto';
 import { UpdateSubscriptionPlanDto } from './dto/update-subscription-plan.dto';
+import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
 
 @Controller('subscription-plan')
 export class SubscriptionPlanController {
-  constructor(private readonly subscriptionPlanService: SubscriptionPlanService) {}
+  constructor(
+    private readonly subscriptionPlanService: SubscriptionPlanService,
+  ) {}
 
   @Post()
   create(@Body() createSubscriptionPlanDto: CreateSubscriptionPlanDto) {
@@ -13,22 +25,25 @@ export class SubscriptionPlanController {
   }
 
   @Get()
-  findAll() {
-    return this.subscriptionPlanService.findAll();
+  findAll(@Query() filter: BaseFilterDto) {
+    return this.subscriptionPlanService.findAll(filter, [], []);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.subscriptionPlanService.findOne(+id);
+    return this.subscriptionPlanService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSubscriptionPlanDto: UpdateSubscriptionPlanDto) {
-    return this.subscriptionPlanService.update(+id, updateSubscriptionPlanDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateSubscriptionPlanDto: UpdateSubscriptionPlanDto,
+  ) {
+    return this.subscriptionPlanService.update(id, updateSubscriptionPlanDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.subscriptionPlanService.remove(+id);
+    return this.subscriptionPlanService.delete(id);
   }
 }

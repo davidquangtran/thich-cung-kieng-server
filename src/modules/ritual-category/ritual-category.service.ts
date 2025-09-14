@@ -1,26 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { CreateRitualCategoryDto } from './dto/create-ritual-category.dto';
-import { UpdateRitualCategoryDto } from './dto/update-ritual-category.dto';
+import { BaseService } from 'src/common/base/service/service.base';
+import { RitualCategory } from './entities/ritual-category.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { RedisService } from 'src/shared/redis/redis.service';
 
 @Injectable()
-export class RitualCategoryService {
-  create(createRitualCategoryDto: CreateRitualCategoryDto) {
-    return 'This action adds a new ritualCategory';
+export class RitualCategoryService extends BaseService<RitualCategory> {
+  constructor(
+    @InjectRepository(RitualCategory, 'postgresql')
+    private readonly ritualCategoryRepository: Repository<RitualCategory>,
+    private readonly redisService: RedisService,
+  ) {
+    super(ritualCategoryRepository, redisService);
   }
 
-  findAll() {
-    return `This action returns all ritualCategory`;
+  protected getDuplicateFields(): string[] {
+    return ['name'];
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} ritualCategory`;
+  protected getDefaultRelations(): string[] {
+    return ['rituals'];
   }
 
-  update(id: number, updateRitualCategoryDto: UpdateRitualCategoryDto) {
-    return `This action updates a #${id} ritualCategory`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} ritualCategory`;
+  protected getSearchableFields(): string[] {
+    return ['name'];
   }
 }

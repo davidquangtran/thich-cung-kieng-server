@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Redis } from '@upstash/redis';
+import {
+  BATCH_SIZE,
+  MAX_CONCURRENT,
+} from 'src/common/constants/cache.constant';
 
 @Injectable()
 export class RedisService {

@@ -1,7 +1,17 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
+import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
 
 @Controller('payment')
 export class PaymentController {
@@ -13,22 +23,22 @@ export class PaymentController {
   }
 
   @Get()
-  findAll() {
-    return this.paymentService.findAll();
+  findAll(@Query() filter: BaseFilterDto) {
+    return this.paymentService.findAll(filter, [], []);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.paymentService.findOne(+id);
+    return this.paymentService.findOne(id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updatePaymentDto: UpdatePaymentDto) {
-    return this.paymentService.update(+id, updatePaymentDto);
+    return this.paymentService.update(id, updatePaymentDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.paymentService.remove(+id);
+    return this.paymentService.delete(id);
   }
 }

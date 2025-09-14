@@ -1,26 +1,30 @@
 import { Injectable } from '@nestjs/common';
 import { CreateOfferingDto } from './dto/create-offering.dto';
 import { UpdateOfferingDto } from './dto/update-offering.dto';
+import { Offering } from './entities/offering.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { BaseService } from 'src/common/base/service/service.base';
+import { Repository } from 'typeorm';
+import { RedisService } from 'src/shared/redis/redis.service';
 
 @Injectable()
-export class OfferingService {
-  create(createOfferingDto: CreateOfferingDto) {
-    return 'This action adds a new offering';
+export class OfferingService extends BaseService<Offering> {
+  constructor(
+    @InjectRepository(Offering, 'postgresql')
+    private readonly offeringRepository: Repository<Offering>,
+    private readonly redisService: RedisService,
+  ) {
+    super(offeringRepository, redisService);
+  }
+  protected getDuplicateFields(): string[] {
+    return [];
   }
 
-  findAll() {
-    return `This action returns all offering`;
+  protected getDefaultRelations(): string[] {
+    return [];
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} offering`;
-  }
-
-  update(id: number, updateOfferingDto: UpdateOfferingDto) {
-    return `This action updates a #${id} offering`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} offering`;
+  protected getSearchableFields(): string[] {
+    return [];
   }
 }

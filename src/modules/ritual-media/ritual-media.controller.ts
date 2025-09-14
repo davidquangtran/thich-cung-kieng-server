@@ -6,10 +6,12 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { RitualMediaService } from './ritual-media.service';
 import { CreateRitualMediaDto } from './dto/create-ritual-media.dto';
 import { UpdateRitualMediaDto } from './dto/update-ritual-media.dto';
+import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
 
 @Controller('ritual-media')
 export class RitualMediaController {
@@ -21,13 +23,13 @@ export class RitualMediaController {
   }
 
   @Get()
-  findAll() {
-    return this.ritualMediaService.findAll();
+  findAll(@Query() filter: BaseFilterDto) {
+    return this.ritualMediaService.findAll(filter, [], []);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.ritualMediaService.findOne(+id);
+    return this.ritualMediaService.findOne(id);
   }
 
   @Patch(':id')
@@ -35,11 +37,11 @@ export class RitualMediaController {
     @Param('id') id: string,
     @Body() updateRitualMediaDto: UpdateRitualMediaDto,
   ) {
-    return this.ritualMediaService.update(+id, updateRitualMediaDto);
+    return this.ritualMediaService.update(id, updateRitualMediaDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.ritualMediaService.remove(+id);
+    return this.ritualMediaService.delete(id);
   }
 }

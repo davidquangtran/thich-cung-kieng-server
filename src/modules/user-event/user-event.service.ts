@@ -1,26 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { CreateUserEventDto } from './dto/create-user-event.dto';
-import { UpdateUserEventDto } from './dto/update-user-event.dto';
+import { BaseService } from 'src/common/base/service/service.base';
+import { UserEvent } from './entities/user-event.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { RedisService } from 'src/shared/redis/redis.service';
 
 @Injectable()
-export class UserEventService {
-  create(createUserEventDto: CreateUserEventDto) {
-    return 'This action adds a new userEvent';
+export class UserEventService extends BaseService<UserEvent> {
+  constructor(
+    @InjectRepository(UserEvent, 'postgresql')
+    private readonly userEventRepository: Repository<UserEvent>,
+    private readonly redisService: RedisService,
+  ) {
+    super(userEventRepository, redisService);
   }
 
-  findAll() {
-    return `This action returns all userEvent`;
+  protected getDuplicateFields(): string[] {
+    return [];
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} userEvent`;
+  protected getDefaultRelations(): string[] {
+    return ['user', 'reminders', 'offerings'];
   }
 
-  update(id: number, updateUserEventDto: UpdateUserEventDto) {
-    return `This action updates a #${id} userEvent`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} userEvent`;
+  protected getSearchableFields(): string[] {
+    return ['title', 'description', 'location'];
   }
 }

@@ -1,7 +1,17 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import { PaymentLogService } from './payment-log.service';
 import { CreatePaymentLogDto } from './dto/create-payment-log.dto';
 import { UpdatePaymentLogDto } from './dto/update-payment-log.dto';
+import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
 
 @Controller('payment-log')
 export class PaymentLogController {
@@ -13,22 +23,25 @@ export class PaymentLogController {
   }
 
   @Get()
-  findAll() {
-    return this.paymentLogService.findAll();
+  findAll(@Query() filter: BaseFilterDto) {
+    return this.paymentLogService.findAll(filter, [], []);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.paymentLogService.findOne(+id);
+    return this.paymentLogService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePaymentLogDto: UpdatePaymentLogDto) {
-    return this.paymentLogService.update(+id, updatePaymentLogDto);
+  update(
+    @Param('id') id: string,
+    @Body() updatePaymentLogDto: UpdatePaymentLogDto,
+  ) {
+    return this.paymentLogService.update(id, updatePaymentLogDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.paymentLogService.remove(+id);
+    return this.paymentLogService.remove(id);
   }
 }

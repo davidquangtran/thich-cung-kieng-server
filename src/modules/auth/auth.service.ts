@@ -20,7 +20,7 @@ export class AuthService {
     private readonly mailService: MailService,
     // private readonly emailQueueService: EmailQueueService,
     private readonly googleAuthService: GoogleAuthService,
-  ) { }
+  ) {}
   /**
    * Generate access and refresh tokens for the user
    * @param payload JWT payload containing user information
@@ -54,7 +54,6 @@ export class AuthService {
           fullName: user.firstName + ' ' + user.lastName,
           profilePicture: user.picture,
         }),
-        [],
       );
       id = newUser.id;
 
@@ -101,7 +100,9 @@ export class AuthService {
     if (!decoded || !decoded.sub || !decoded.email) {
       throw new UnauthorizedException('Invalid refresh token');
     }
-    const user = await this.usersService.findByOptions({ email: decoded.email });
+    const user = await this.usersService.findByOptions({
+      email: decoded.email,
+    });
 
     if (!user || !user.refreshToken || refreshToken !== user.refreshToken) {
       throw new UnauthorizedException('Invalid refresh token or user');
@@ -132,7 +133,9 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    const user = await this.usersService.findByOptions({ email: decoded.email });
+    const user = await this.usersService.findByOptions({
+      email: decoded.email,
+    });
     console.log('User found:', user);
     if (!user || !user.refreshToken || refreshToken !== user.refreshToken) {
       throw new UnauthorizedException('Invalid refresh token or user');
@@ -172,7 +175,6 @@ export class AuthService {
           fullName: googleUser.name || googleUser.email.split('@')[0],
           profilePicture: googleUser.picture,
         }),
-        [],
       );
       id = newUser.id;
 

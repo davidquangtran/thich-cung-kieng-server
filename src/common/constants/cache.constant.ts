@@ -5,3 +5,5 @@ export const CACHE_FIELD_DETAIL = 'detail';
 export const CACHE_FIELD_SELECT_OPTIONS = 'select:options';
 export const CACHE_FIELD_FIND_OPTIONS = 'find:options';
 export const TTL_SECONDS = 600; // 10 phút
+export const BATCH_SIZE = 100; // Kích thước batch cho xóa key
+export const MAX_CONCURRENT = 3; // Số lượng concurrent requests tối đa khi xóa key theo pattern

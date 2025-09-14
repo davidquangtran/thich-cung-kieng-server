@@ -1,7 +1,17 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import { OfferingService } from './offering.service';
 import { CreateOfferingDto } from './dto/create-offering.dto';
 import { UpdateOfferingDto } from './dto/update-offering.dto';
+import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
 
 @Controller('offering')
 export class OfferingController {
@@ -13,22 +23,25 @@ export class OfferingController {
   }
 
   @Get()
-  findAll() {
-    return this.offeringService.findAll();
+  findAll(@Query() filter: BaseFilterDto) {
+    return this.offeringService.findAll(filter, [], []);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.offeringService.findOne(+id);
+    return this.offeringService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateOfferingDto: UpdateOfferingDto) {
-    return this.offeringService.update(+id, updateOfferingDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateOfferingDto: UpdateOfferingDto,
+  ) {
+    return this.offeringService.update(id, updateOfferingDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.offeringService.remove(+id);
+    return this.offeringService.delete(id);
   }
 }

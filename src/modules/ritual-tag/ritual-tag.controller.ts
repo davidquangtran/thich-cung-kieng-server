@@ -6,10 +6,12 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { RitualTagService } from './ritual-tag.service';
 import { CreateRitualTagDto } from './dto/create-ritual-tag.dto';
 import { UpdateRitualTagDto } from './dto/update-ritual-tag.dto';
+import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
 
 @Controller('ritual-tag')
 export class RitualTagController {
@@ -21,13 +23,13 @@ export class RitualTagController {
   }
 
   @Get()
-  findAll() {
-    return this.ritualTagService.findAll();
+  findAll(@Query() filter: BaseFilterDto) {
+    return this.ritualTagService.findAll(filter, [], []);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.ritualTagService.findOne(+id);
+    return this.ritualTagService.findOne(id);
   }
 
   @Patch(':id')
@@ -35,11 +37,11 @@ export class RitualTagController {
     @Param('id') id: string,
     @Body() updateRitualTagDto: UpdateRitualTagDto,
   ) {
-    return this.ritualTagService.update(+id, updateRitualTagDto);
+    return this.ritualTagService.update(id, updateRitualTagDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.ritualTagService.remove(+id);
+    return this.ritualTagService.delete(id);
   }
 }

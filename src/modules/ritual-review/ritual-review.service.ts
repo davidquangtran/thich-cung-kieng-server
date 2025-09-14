@@ -1,26 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { CreateRitualReviewDto } from './dto/create-ritual-review.dto';
-import { UpdateRitualReviewDto } from './dto/update-ritual-review.dto';
+import { BaseService } from 'src/common/base/service/service.base';
+import { RitualReview } from './entities/ritual-review.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { RedisService } from 'src/shared/redis/redis.service';
 
 @Injectable()
-export class RitualReviewService {
-  create(createRitualReviewDto: CreateRitualReviewDto) {
-    return 'This action adds a new ritualReview';
+export class RitualReviewService extends BaseService<RitualReview> {
+  constructor(
+    @InjectRepository(RitualReview, 'postgresql')
+    private readonly ritualReviewRepository: Repository<RitualReview>,
+    private readonly redisService: RedisService,
+  ) {
+    super(ritualReviewRepository, redisService);
   }
 
-  findAll() {
-    return `This action returns all ritualReview`;
+  protected getDuplicateFields(): string[] {
+    return [];
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} ritualReview`;
+  protected getDefaultRelations(): string[] {
+    return ['ritual', 'user'];
   }
 
-  update(id: number, updateRitualReviewDto: UpdateRitualReviewDto) {
-    return `This action updates a #${id} ritualReview`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} ritualReview`;
+  protected getSearchableFields(): string[] {
+    return ['comment'];
   }
 }

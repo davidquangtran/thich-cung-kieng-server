@@ -1,7 +1,17 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import { PrayerService } from './prayer.service';
 import { CreatePrayerDto } from './dto/create-prayer.dto';
 import { UpdatePrayerDto } from './dto/update-prayer.dto';
+import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
 
 @Controller('prayer')
 export class PrayerController {
@@ -13,22 +23,22 @@ export class PrayerController {
   }
 
   @Get()
-  findAll() {
-    return this.prayerService.findAll();
+  findAll(@Query() filter: BaseFilterDto) {
+    return this.prayerService.findAll(filter, [], []);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.prayerService.findOne(+id);
+    return this.prayerService.findOne(id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updatePrayerDto: UpdatePrayerDto) {
-    return this.prayerService.update(+id, updatePrayerDto);
+    return this.prayerService.update(id, updatePrayerDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.prayerService.remove(+id);
+    return this.prayerService.delete(id);
   }
 }

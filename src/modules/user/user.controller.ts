@@ -9,6 +9,7 @@ import {
   Query,
   ParseUUIDPipe,
   HttpStatus,
+  Post,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -26,6 +27,9 @@ import {
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from 'src/common/enums/user.enum';
 import { UserService } from './user.service';
+import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @ApiTags('Users')
 @ApiBearerAuth()
@@ -37,24 +41,31 @@ import { UserService } from './user.service';
 })
 @Controller('user')
 export class UserController {
-  constructor(private readonly usersService: UserService) { }
+  constructor(private readonly usersService: UserService) {}
 
-  // @Get()
-  // @Roles(UserRole.ADMIN)
-  // @ApiOperation({
-  //   summary: 'Get all users',
-  //   description:
-  //     'Retrieve list of all users in the system with pagination and filtering. Admin only.',
-  // })
-  // @ApiOkResponse({
-  //   description: 'List of users retrieved successfully',
-  //   type: FindAllUsersResponseDto,
-  // })
-  // async findAll(
-  //   @Query() query: FindAllUsersQueryDto,
-  // ): Promise<FindAllUsersResponseDto> {
-  //   return this.usersService.findAll(query);
-  // }
+  @Post()
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: 'Create a new user',
+    description: 'Create a new user. Admin only.',
+  })
+  create(@Body() createUserDto: CreateUserDto) {
+    return this.usersService.create(createUserDto);
+  }
+
+  @Get()
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: 'Get all users',
+    description:
+      'Retrieve list of all users in the system with pagination and filtering. Admin only.',
+  })
+  @ApiOkResponse({
+    description: 'List of users retrieved successfully',
+  })
+  async findAll(@Query() filter: BaseFilterDto) {
+    return this.usersService.findAll(filter, [], []);
+  }
 
   @Get('me')
   @Roles(UserRole.USER, UserRole.ADMIN)
@@ -71,7 +82,9 @@ export class UserController {
     description: 'User not found',
   })
   async getMe(@Req() req: Request & { user: { email: string } }) {
-    const user = await this.usersService.findByOptions({ email: req.user.email });
+    const user = await this.usersService.findByOptions({
+      email: req.user.email,
+    });
     if (!user) {
       throw new Error('User not found');
     }
@@ -104,65 +117,61 @@ export class UserController {
   //   return this.usersService.findUserByEmail(email);
   // }
 
-  // @Get(':id')
-  // @Roles(UserRole.ADMIN, UserRole.STAFF)
-  // @ApiOperation({
-  //   summary: 'Find user by ID',
-  //   description:
-  //     'Find a specific user by their unique ID. Admin and Staff only.',
-  // })
-  // @ApiParam({
-  //   name: 'id',
-  //   description: 'User unique identifier (UUID)',
-  //   example: 'c2adc0a6-7af6-4484-8ae0-72349d78e769',
-  // })
-  // @ApiOkResponse({
-  //   description: 'User found successfully',
-  //   type: UserResponseDto,
-  // })
-  // @ApiNotFoundResponse({
-  //   description: 'User with specified ID not found',
-  // })
-  // @ApiBadRequestResponse({
-  //   description: 'Invalid UUID format',
-  // })
-  // async findOne(
-  //   @Param('id', ParseUUIDPipe) id: string,
-  // ): Promise<UserResponseDto> {
-  //   return this.usersService.findOne(id);
-  // }
+  @Get(':id')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: 'Find user by ID',
+    description:
+      'Find a specific user by their unique ID. Admin and Staff only.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'User unique identifier (UUID)',
+    example: 'c2adc0a6-7af6-4484-8ae0-72349d78e769',
+  })
+  @ApiOkResponse({
+    description: 'User found successfully',
+  })
+  @ApiNotFoundResponse({
+    description: 'User with specified ID not found',
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid UUID format',
+  })
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.usersService.findOne(id);
+  }
 
-  // @Patch(':id')
-  // @Roles(UserRole.ADMIN, UserRole.STAFF)
-  // @ApiOperation({
-  //   summary: 'Update user information',
-  //   description: 'Update user profile information. Admin and Staff only.',
-  // })
-  // @ApiParam({
-  //   name: 'id',
-  //   description: 'User unique identifier (UUID)',
-  //   example: 'c2adc0a6-7af6-4484-8ae0-72349d78e769',
-  // })
-  // @ApiOkResponse({
-  //   description: 'User updated successfully',
-  //   type: UserResponseDto,
-  // })
-  // @ApiNotFoundResponse({
-  //   description: 'User not found',
-  // })
-  // @ApiBadRequestResponse({
-  //   description: 'Invalid input data or UUID format',
-  // })
-  // @ApiResponse({
-  //   status: HttpStatus.CONFLICT,
-  //   description: 'Email already exists',
-  // })
-  // async update(
-  //   @Param('id', ParseUUIDPipe) id: string,
-  //   @Body() updateUserDto: UpdateUserDto,
-  // ): Promise<UserResponseDto> {
-  //   return this.usersService.updateUserInfo(id, updateUserDto);
-  // }
+  @Patch(':id')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: 'Update user information',
+    description: 'Update user profile information. Admin only.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'User unique identifier (UUID)',
+    example: 'c2adc0a6-7af6-4484-8ae0-72349d78e769',
+  })
+  @ApiOkResponse({
+    description: 'User updated successfully',
+  })
+  @ApiNotFoundResponse({
+    description: 'User not found',
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid input data or UUID format',
+  })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: 'Email already exists',
+  })
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    return this.usersService.update(id, updateUserDto);
+  }
 
   // @Patch(':id/role')
   // @Roles(UserRole.ADMIN)
@@ -257,6 +266,6 @@ export class UserController {
     description: 'Invalid UUID format or user is already active',
   })
   async restore(@Param('id', ParseUUIDPipe) id: string) {
-    return this.usersService.softDelete(id);
+    return this.usersService.softRemove(id);
   }
 }

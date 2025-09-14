@@ -1,229 +1,23 @@
-import { BuildCacheKeyOptions } from '../../interfaces/build-cache-key-options.interface';
 import { RedisService } from 'src/shared/redis/redis.service';
-import {
-  DeepPartial,
-  FindOptionsWhere,
-  Repository,
-  SelectQueryBuilder,
-} from 'typeorm';
-import { buildCacheKey } from '../../utils/build-cache-key.util';
-import {
-  CACHE_FIELD_DETAIL,
-  CACHE_FIELD_FIND_OPTIONS,
-  CACHE_FIELD_LIST_ALL_FILTER,
-  CACHE_FIELD_SELECT_OPTIONS,
-  CACHE_NAMESPACE,
-  TTL_SECONDS,
-} from '../../constants/cache.constant';
-import { BaseFilterDto } from '../dto/base-filter.dto';
-import { PaginatedResponseDto } from '../dto/paginated-response.dto';
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { DeepPartial, EntityManager, Repository } from 'typeorm';
+import { CACHE_FIELD_DETAIL } from '../../constants/cache.constant';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { AbstractEntity } from '../entity.base';
+import { QueryServiceBase } from './query-service.base';
 
 @Injectable()
-export abstract class BaseService<T extends AbstractEntity> {
-  private readonly logger: Logger;
-  constructor(
-    private readonly repository: Repository<T>,
-    private readonly redis: RedisService,
-  ) {
-    this.logger = new Logger(this.constructor.name);
+export abstract class BaseService<
+  T extends AbstractEntity,
+> extends QueryServiceBase<T> {
+  constructor(repository: Repository<T>, redis: RedisService) {
+    super(repository, redis);
   }
 
-  async findAll(
-    filter: BaseFilterDto,
-    relations: string[],
-    select: string[],
-  ): Promise<PaginatedResponseDto<T> | null> {
-    try {
-      const page = filter.page || 1;
-      const limit = filter.limit || 10;
-      const sortBy = filter.sortBy || 'createdAt';
-      const sortOrder = filter.sortOrder || 'DESC';
-      const search = filter.search;
-      const skip = (page - 1) * limit;
-
-      // Create query builder with base filters
-      const entityName = this.getEntityName();
-      const entityAlias = entityName.toLowerCase();
-      const queryBuilder = this.createQueryBuilder(filter);
-
-      // Add search condition
-      if (search && this.getSearchableFields().length > 0) {
-        const searchFields = this.getSearchableFields();
-
-        // Dùng similarity để so sánh mờ (fuzzy match)
-        const fuzzyConditions = searchFields
-          .map(
-            (field) =>
-              `similarity(unaccent(${entityAlias}."${field}"), unaccent(:search)) > 0.2`,
-          )
-          .join(' OR ');
-
-        // Ngoài ra, hỗ trợ ILIKE + %term% để bắt chuỗi gần chính xác
-        const ilikeConditions = searchFields
-          .map(
-            (field) =>
-              `unaccent(${entityAlias}."${field}") ILIKE unaccent(:ilikeSearch)`,
-          )
-          .join(' OR ');
-
-        // Kết hợp cả hai
-        queryBuilder.andWhere(`(${fuzzyConditions} OR ${ilikeConditions})`, {
-          search,
-          ilikeSearch: `%${search}%`,
-        });
-      }
-
-      // Add valid relations
-      if (relations && relations.length > 0) {
-        this.autoJoinRelations(queryBuilder, entityAlias, relations);
-      }
-
-      // Add sorting and pagination
-      queryBuilder
-        .orderBy(`${entityAlias}.${sortBy}`, sortOrder as 'ASC' | 'DESC')
-        .skip(skip)
-        .take(limit);
-
-      this.logger.log(
-        `Finding all ${entityName} with query:`,
-        queryBuilder.getQuery(),
-      );
-
-      // Add select
-      if (select && select.length > 0) {
-        const auditFields = [
-          'createdAt',
-          'updatedAt',
-          'createdBy',
-          'updatedBy',
-          'deletedAt',
-        ];
-        const finalSelect = [...select];
-        if (!finalSelect.includes('id')) {
-          finalSelect.push('id');
-        }
-        auditFields.forEach((field) => {
-          if (!finalSelect.includes(field)) {
-            finalSelect.push(field);
-          }
-        });
-
-        queryBuilder.select(
-          finalSelect.map((field) => `${entityAlias}.${field}`),
-        );
-      }
-
-      this.logger.log(
-        `Finding all ${entityName} with query:`,
-        queryBuilder.getQuery(),
-      );
-
-      const [data, totalItems] = await queryBuilder.getManyAndCount();
-      const cacheKey = this.getCacheKey({
-        identifier: JSON.stringify({ filter, relations, select }),
-        field: CACHE_FIELD_LIST_ALL_FILTER,
-      });
-      const cached = await this.redis.get<PaginatedResponseDto<T>>(cacheKey);
-      if (cached) return cached;
-
-      const result = new PaginatedResponseDto<T>(data, totalItems, page, limit);
-
-      if (result) await this.redis.set(cacheKey, result, TTL_SECONDS);
-      return result;
-    } catch (error) {
-      this.logger.error(`Error finding all ${this.getEntityName()}:`, error);
-      throw error;
-    }
-  }
-
-  async findByOptions(options: FindOptionsWhere<T>): Promise<T | null> {
-    try {
-      const cacheKey = this.getCacheKey({
-        identifier: JSON.stringify(options),
-        field: CACHE_FIELD_FIND_OPTIONS,
-      });
-      const cached = await this.redis.get<T>(cacheKey);
-      if (cached) return cached;
-
-      const result = await this.repository.findOne({
-        where: { ...options, deletedAt: null } as any as FindOptionsWhere<T>,
-      });
-      if (result) await this.redis.set(cacheKey, result, TTL_SECONDS);
-      return result;
-    } catch (error) {
-      this.logger.error(
-        `Error finding ${this.getEntityName()} by options:`,
-        error,
-      );
-      throw error;
-    }
-  }
-
-  async findOne(id: string): Promise<T | null> {
-    try {
-      const cacheKey = this.getCacheKey({
-        identifier: id,
-        field: CACHE_FIELD_DETAIL,
-      });
-      const cached = await this.redis.get<T>(cacheKey);
-      if (cached) return cached;
-
-      const result = await this.repository.findOne({
-        where: { id, deletedAt: null } as any as FindOptionsWhere<T>,
-      });
-      if (result) await this.redis.set(cacheKey, result, TTL_SECONDS);
-      return result;
-    } catch (error) {
-      this.logger.error(
-        `Error finding one ${this.getEntityName()} with id ${id}:`,
-        error,
-      );
-      throw error;
-    }
-  }
-
-  async selectOptions(): Promise<T[] | null> {
-    try {
-      const cacheKey = this.getCacheKey({ field: CACHE_FIELD_SELECT_OPTIONS });
-      const cached = await this.redis.get<T[]>(cacheKey);
-      if (cached) return cached;
-
-      const result = await this.repository.find({
-        where: { deletedAt: null } as any as FindOptionsWhere<T>,
-        select: ['id', 'name'] as Array<keyof T>,
-      });
-      if (result) await this.redis.set(cacheKey, result, TTL_SECONDS);
-      return result;
-    } catch (error) {
-      this.logger.error(
-        `Error getting select options for ${this.getEntityName()}:`,
-        error,
-      );
-      throw error;
-    }
-  }
-
-  async create(createDto: DeepPartial<T>, relations: string[]): Promise<T> {
-
+  async create(createDto: DeepPartial<T>): Promise<T> {
     try {
       if (!createDto) throw new Error('Data to create is required');
-      this.logger.log(`Creating new ${this.getEntityName()}`);
-      const findBy = this.getDuplicateFields();
-      for (const field of findBy) {
-        const value = createDto[field];
-        if (!value) continue;
-
-        const isExisting = await this.findByOptions({
-          [field]: value,
-        } as any);
-        if (isExisting) {
-          throw new BadRequestException(
-            `${this.getEntityName()} with ${field} ${value} already exists`,
-          );
-        }
-      }
+      const duplicateFields = this.getDuplicateFields();
+      await this.checkDuplicateField(duplicateFields, createDto);
       const entity = this.repository.create(createDto);
       return await this.repository.save(entity);
     } catch (error) {
@@ -232,11 +26,43 @@ export abstract class BaseService<T extends AbstractEntity> {
     }
   }
 
-  async update(id: string, data: DeepPartial<T>): Promise<T | null> {
+  async createWithRelations(
+    createDto: DeepPartial<T>,
+    relationData?: Record<string, any>,
+  ): Promise<T | null> {
+    return await this.repository.manager.transaction(
+      async (manager: EntityManager) => {
+        try {
+          if (!createDto) throw new Error('Data to create is required');
+          const duplicateFields = this.getDuplicateFields();
+          await this.checkDuplicateField(duplicateFields, createDto);
+          const entity = this.repository.create(createDto);
+          const savedEntity = await manager.save(entity);
+          if (relationData && Object.keys(relationData).length > 0) {
+            await this.createRelationships(manager, savedEntity, relationData);
+          }
+          this.logger.log(
+            `Created ${this.getEntityName()} with relations, id: ${savedEntity.id}`,
+          );
+          return savedEntity;
+        } catch (error) {
+          this.logger.error(
+            `Error creating ${this.getEntityName()} with relations:`,
+            error,
+          );
+          throw error;
+        }
+      },
+    );
+  }
+
+  async update(id: string, updateDto: DeepPartial<T>): Promise<T | null> {
     try {
       const entity = await this.findOne(id);
       if (!entity) return null;
-      this.repository.merge(entity, data);
+      const duplicateFields = this.getDuplicateFields();
+      await this.checkDuplicateField(duplicateFields, updateDto);
+      this.repository.merge(entity, updateDto);
       return await this.repository.save(entity);
     } catch (error) {
       this.logger.error(
@@ -249,9 +75,12 @@ export abstract class BaseService<T extends AbstractEntity> {
 
   async updateField(id: string, field: keyof T, value: any): Promise<T | null> {
     try {
+      if (!id || !field) {
+        throw new BadRequestException('ID and field to update are required');
+      }
       const entity = await this.findOne(id);
       if (!entity) return null;
-      entity[field] = value;
+      (entity as any)[field] = value;
       return await this.repository.save(entity);
     } catch (error) {
       this.logger.error(
@@ -262,8 +91,70 @@ export abstract class BaseService<T extends AbstractEntity> {
     }
   }
 
-  async delete(id: string): Promise<void> {
+  async updateWithRelations(
+    id: string,
+    updateDto: DeepPartial<T>,
+    relationData?: Record<string, any>,
+  ): Promise<T | null> {
+    return await this.repository.manager.transaction(
+      async (manager: EntityManager) => {
+        try {
+          if (!id || !updateDto) {
+            throw new BadRequestException('ID and update data are required');
+          }
+          const entity = await this.findOne(id);
+          if (!entity) return null;
+
+          const duplicateFields = this.getDuplicateFields();
+          await this.checkDuplicateField(duplicateFields, updateDto);
+          this.repository.merge(entity, updateDto);
+          const updatedEntity = await this.repository.save(entity);
+
+          if (relationData && Object.keys(relationData).length > 0) {
+            await this.updateRelationships(
+              manager,
+              updatedEntity,
+              relationData,
+            );
+          }
+
+          this.logger.log(
+            `Updated ${this.getEntityName()} with relations, id: ${updatedEntity.id}`,
+          );
+          return updatedEntity;
+        } catch (error) {
+          this.logger.error(
+            `Error updating ${this.getEntityName()} with id ${id} and relations:`,
+            error,
+          );
+          throw error;
+        }
+      },
+    );
+  }
+
+  async delete(id: string): Promise<boolean> {
     try {
+      if (!id) throw new Error('ID to delete is required');
+      const entity = await this.findOne(id);
+      if (!entity) return false;
+      await this.redis.del(
+        this.getCacheKey({ identifier: id, field: CACHE_FIELD_DETAIL }),
+      );
+      await this.repository.delete(id);
+      return true;
+    } catch (error) {
+      this.logger.error(
+        `Error deleting ${this.getEntityName()} with id ${id}:`,
+        error,
+      );
+      throw error;
+    }
+  }
+
+  async remove(id: string): Promise<void> {
+    try {
+      if (!id) throw new Error('ID to remove is required');
       const entity = await this.findOne(id);
       if (!entity) return;
       await this.redis.del(
@@ -279,8 +170,9 @@ export abstract class BaseService<T extends AbstractEntity> {
     }
   }
 
-  async softDelete(id: string): Promise<void> {
+  async softRemove(id: string): Promise<void> {
     try {
+      if (!id) throw new Error('ID to soft remove is required');
       const entity = await this.findOne(id);
       if (!entity) return;
       await this.redis.del(
@@ -296,66 +188,89 @@ export abstract class BaseService<T extends AbstractEntity> {
     }
   }
 
-  private getCacheKey(options: BuildCacheKeyOptions): string {
-    return buildCacheKey({
-      namespace: CACHE_NAMESPACE,
-      module: this.getEntityName(),
-      ...options,
-    });
-  }
+  // Utility method
+  private async checkDuplicateField(
+    fields: string[],
+    data: DeepPartial<T>,
+  ): Promise<void> {
+    for (const field of fields) {
+      const value = data[field];
+      if (!value) continue;
 
-  private getEntityName(): string {
-    return this.repository.metadata.name;
-  }
-
-  private autoJoinRelations(
-    queryBuilder: any,
-    baseAlias: string,
-    relations: string[],
-  ) {
-    const joined = new Set<string>();
-
-    relations.forEach((relationPath) => {
-      const parts = relationPath.split('.');
-      let currentAlias = baseAlias;
-
-      for (const part of parts) {
-        const nextAlias = `${currentAlias}_${part}`;
-        const fullPath = `${currentAlias}.${part}`;
-
-        if (!joined.has(fullPath)) {
-          queryBuilder.leftJoinAndSelect(fullPath, nextAlias);
-          joined.add(fullPath);
-        }
-
-        currentAlias = nextAlias;
+      const isExisting = await this.findByOptions({
+        [field]: value,
+      } as any);
+      if (isExisting) {
+        throw new BadRequestException(
+          `${this.getEntityName()} with ${field} ${value} already exists`,
+        );
       }
-    });
+    }
   }
 
+  // OPTIONAL METHOD - Override in child classes if needed
   /**
-   * Override this method in child classes to specify searchable fields
-   * @returns The searchable fields
+   * Create relationships after creating the main entity.
+   * @param manager The EntityManager to use for database operations.
+   * @param mainEntity The main entity that was created.
+   * @param relationData Additional data needed to create relationships.
    */
-  protected getSearchableFields(): string[] {
-    return [];
+  protected async createRelationships(
+    manager: EntityManager,
+    mainEntity: T,
+    relationData?: Record<string, any>,
+  ): Promise<void> {
+    this.logger.log(
+      `No relationship creation implemented for ${this.getEntityName()}`,
+    );
   }
 
   /**
-   * Override method fields to filter in findAll
-   * @returns The fields to filter in findAll
+   * Update relationships after updating the main entity.
+   * @param manager EntityManager
+   * @param mainEntity The main entity that was updated.
+   * @param relationData Additional data needed to update relationships.
    */
-  protected createQueryBuilder(filter: any): SelectQueryBuilder<T> {
-    const entityAlias = this.getEntityName().toLowerCase();
-    const queryBuilder = this.repository.createQueryBuilder(entityAlias);
-    return queryBuilder;
+  protected async updateRelationships(
+    manager: EntityManager,
+    mainEntity: T,
+    relationData?: Record<string, any>,
+  ): Promise<void> {
+    this.logger.log(
+      `No relationship update implemented for ${this.getEntityName()}`,
+    );
   }
 
   /**
- * Get fields to check for duplicates
- * @returns The fields to check for duplicates
- */
-  protected getDuplicateFields(): string[] {
-    return [];
+   * Validate the input data for creating a new entity.
+   * @param createDto The data to validate.
+   */
+  protected async validateCreateInput(
+    createDto: DeepPartial<T>,
+  ): Promise<void> {
+    // Override in child classes for custom validation
+    // Default: no validation
+  }
+
+  /**
+   * Validate the update data before updating an existing entity.
+   * @param updateDto The data to validate.
+   */
+  protected async validateUpdateInput(
+    updateDto: DeepPartial<T>,
+  ): Promise<void> {
+    // Override in child classes for custom validation
+    // Default: no validation
+  }
+
+  /**
+   * Validate the relation data before creating relationships.
+   * @param relationData The relation data to validate.
+   */
+  protected async validateRelationData(
+    relationData: Record<string, any>,
+  ): Promise<void> {
+    // Override in child classes for custom validation
+    // Default: no validation
   }
 }

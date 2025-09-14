@@ -1,7 +1,17 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import { PlanFeatureService } from './plan-feature.service';
 import { CreatePlanFeatureDto } from './dto/create-plan-feature.dto';
 import { UpdatePlanFeatureDto } from './dto/update-plan-feature.dto';
+import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
 
 @Controller('plan-feature')
 export class PlanFeatureController {
@@ -13,22 +23,25 @@ export class PlanFeatureController {
   }
 
   @Get()
-  findAll() {
-    return this.planFeatureService.findAll();
+  findAll(@Query() filter: BaseFilterDto) {
+    return this.planFeatureService.findAll(filter, [], []);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.planFeatureService.findOne(+id);
+    return this.planFeatureService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePlanFeatureDto: UpdatePlanFeatureDto) {
-    return this.planFeatureService.update(+id, updatePlanFeatureDto);
+  update(
+    @Param('id') id: string,
+    @Body() updatePlanFeatureDto: UpdatePlanFeatureDto,
+  ) {
+    return this.planFeatureService.update(id, updatePlanFeatureDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.planFeatureService.remove(+id);
+    return this.planFeatureService.remove(id);
   }
 }

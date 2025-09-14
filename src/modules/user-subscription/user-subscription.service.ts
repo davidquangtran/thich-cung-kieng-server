@@ -1,26 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { CreateUserSubscriptionDto } from './dto/create-user-subscription.dto';
-import { UpdateUserSubscriptionDto } from './dto/update-user-subscription.dto';
+import { BaseService } from 'src/common/base/service/service.base';
+import { UserSubscription } from './entities/user-subscription.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { RedisService } from 'src/shared/redis/redis.service';
 
 @Injectable()
-export class UserSubscriptionService {
-  create(createUserSubscriptionDto: CreateUserSubscriptionDto) {
-    return 'This action adds a new userSubscription';
+export class UserSubscriptionService extends BaseService<UserSubscription> {
+  constructor(
+    @InjectRepository(UserSubscription, 'postgresql')
+    private readonly userSubscriptionRepository: Repository<UserSubscription>,
+    private readonly redisService: RedisService,
+  ) {
+    super(userSubscriptionRepository, redisService);
   }
 
-  findAll() {
-    return `This action returns all userSubscription`;
+  protected getDuplicateFields(): string[] {
+    return [];
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} userSubscription`;
+  protected getDefaultRelations(): string[] {
+    return ['user', 'subscriptionPlan', 'payment'];
   }
 
-  update(id: number, updateUserSubscriptionDto: UpdateUserSubscriptionDto) {
-    return `This action updates a #${id} userSubscription`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} userSubscription`;
+  protected getSearchableFields(): string[] {
+    return [];
   }
 }

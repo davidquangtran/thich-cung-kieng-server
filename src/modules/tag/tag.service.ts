@@ -1,26 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { CreateTagDto } from './dto/create-tag.dto';
-import { UpdateTagDto } from './dto/update-tag.dto';
+import { BaseService } from 'src/common/base/service/service.base';
+import { Tag } from './entities/tag.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { RedisService } from 'src/shared/redis/redis.service';
 
 @Injectable()
-export class TagService {
-  create(createTagDto: CreateTagDto) {
-    return 'This action adds a new tag';
+export class TagService extends BaseService<Tag> {
+  constructor(
+    @InjectRepository(Tag, 'postgresql')
+    private readonly tagRepository: Repository<Tag>,
+    private readonly redisService: RedisService,
+  ) {
+    super(tagRepository, redisService);
   }
 
-  findAll() {
-    return `This action returns all tag`;
+  protected getDuplicateFields(): string[] {
+    return ['name'];
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} tag`;
+  protected getDefaultRelations(): string[] {
+    return [];
   }
 
-  update(id: number, updateTagDto: UpdateTagDto) {
-    return `This action updates a #${id} tag`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} tag`;
+  protected getSearchableFields(): string[] {
+    return ['name'];
   }
 }

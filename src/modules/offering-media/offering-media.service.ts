@@ -1,26 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { CreateOfferingMediaDto } from './dto/create-offering-media.dto';
-import { UpdateOfferingMediaDto } from './dto/update-offering-media.dto';
+import { BaseService } from 'src/common/base/service/service.base';
+import { OfferingMedia } from './entities/offering-media.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { RedisService } from 'src/shared/redis/redis.service';
 
 @Injectable()
-export class OfferingMediaService {
-  create(createOfferingMediaDto: CreateOfferingMediaDto) {
-    return 'This action adds a new offeringMedia';
+export class OfferingMediaService extends BaseService<OfferingMedia> {
+  constructor(
+    @InjectRepository(OfferingMedia, 'postgresql')
+    private readonly offeringMediaRepository: Repository<OfferingMedia>,
+    private readonly redisService: RedisService,
+  ) {
+    super(offeringMediaRepository, redisService);
   }
 
-  findAll() {
-    return `This action returns all offeringMedia`;
+  protected getDuplicateFields(): string[] {
+    return [];
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} offeringMedia`;
+  protected getDefaultRelations(): string[] {
+    return ['offering'];
   }
 
-  update(id: number, updateOfferingMediaDto: UpdateOfferingMediaDto) {
-    return `This action updates a #${id} offeringMedia`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} offeringMedia`;
+  protected getSearchableFields(): string[] {
+    return ['url', 'alt'];
   }
 }

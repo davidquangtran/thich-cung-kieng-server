@@ -1,26 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { CreatePaymentDto } from './dto/create-payment.dto';
-import { UpdatePaymentDto } from './dto/update-payment.dto';
+import { BaseService } from 'src/common/base/service/service.base';
+import { Payment } from './entities/payment.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { RedisService } from 'src/shared/redis/redis.service';
 
 @Injectable()
-export class PaymentService {
-  create(createPaymentDto: CreatePaymentDto) {
-    return 'This action adds a new payment';
+export class PaymentService extends BaseService<Payment> {
+  constructor(
+    @InjectRepository(Payment, 'postgresql')
+    private readonly paymentRepository: Repository<Payment>,
+    private readonly redisService: RedisService,
+  ) {
+    super(paymentRepository, redisService);
   }
 
-  findAll() {
-    return `This action returns all payment`;
+  protected getDuplicateFields(): string[] {
+    return [];
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} payment`;
+  protected getDefaultRelations(): string[] {
+    return ['user', 'userSubscription', 'paymentLogs'];
   }
 
-  update(id: number, updatePaymentDto: UpdatePaymentDto) {
-    return `This action updates a #${id} payment`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} payment`;
+  protected getSearchableFields(): string[] {
+    return ['currency'];
   }
 }
