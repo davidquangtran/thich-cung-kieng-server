@@ -11,3 +11,8 @@ export enum UserEventRepeatRule {
   MONTHLY = 'monthly',
   YEARLY = 'yearly',
 }
+
+export enum UserEventType {
+  PERSONAL = 'personal',
+  RITUAL = 'ritual',
+}

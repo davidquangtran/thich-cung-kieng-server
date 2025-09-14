@@ -1,11 +1,23 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import { UserFavoriteRitualService } from './user-favorite-ritual.service';
 import { CreateUserFavoriteRitualDto } from './dto/create-user-favorite-ritual.dto';
 import { UpdateUserFavoriteRitualDto } from './dto/update-user-favorite-ritual.dto';
+import { FilterUserFavoriteRitualDto } from './dto/filter-user-favorite-ritual.dto';
 
 @Controller('user-favorite-ritual')
 export class UserFavoriteRitualController {
-  constructor(private readonly userFavoriteRitualService: UserFavoriteRitualService) {}
+  constructor(
+    private readonly userFavoriteRitualService: UserFavoriteRitualService,
+  ) {}
 
   @Post()
   create(@Body() createUserFavoriteRitualDto: CreateUserFavoriteRitualDto) {
@@ -13,22 +25,17 @@ export class UserFavoriteRitualController {
   }
 
   @Get()
-  findAll() {
-    return this.userFavoriteRitualService.findAll();
+  findAll(@Query() filter: FilterUserFavoriteRitualDto) {
+    return this.userFavoriteRitualService.findAll(filter, [], []);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.userFavoriteRitualService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserFavoriteRitualDto: UpdateUserFavoriteRitualDto) {
-    return this.userFavoriteRitualService.update(+id, updateUserFavoriteRitualDto);
+    return this.userFavoriteRitualService.findOne(id);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.userFavoriteRitualService.remove(+id);
+    return this.userFavoriteRitualService.remove(id);
   }
 }

@@ -1,26 +1,57 @@
 import { Injectable } from '@nestjs/common';
 import { CreateUserFavoriteRitualDto } from './dto/create-user-favorite-ritual.dto';
 import { UpdateUserFavoriteRitualDto } from './dto/update-user-favorite-ritual.dto';
+import { UserFavoriteRitual } from './entities/user-favorite-ritual.entity';
+import { BaseService } from 'src/common/base/service/service.base';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
+import { RedisService } from 'src/shared/redis/redis.service';
+import { FilterUserFavoriteRitualDto } from './dto/filter-user-favorite-ritual.dto';
 
 @Injectable()
-export class UserFavoriteRitualService {
-  create(createUserFavoriteRitualDto: CreateUserFavoriteRitualDto) {
-    return 'This action adds a new userFavoriteRitual';
+export class UserFavoriteRitualService extends BaseService<UserFavoriteRitual> {
+  constructor(
+    @InjectRepository(UserFavoriteRitual, 'postgresql')
+    private readonly userFavoriteRitualRepository: Repository<UserFavoriteRitual>,
+    private readonly redisService: RedisService,
+  ) {
+    super(userFavoriteRitualRepository, redisService);
+  }
+  protected getDuplicateFields(): string[] {
+    return [];
   }
 
-  findAll() {
-    return `This action returns all userFavoriteRitual`;
+  protected getDefaultRelations(): string[] {
+    return [];
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} userFavoriteRitual`;
+  protected getSearchableFields(): string[] {
+    return [];
   }
+  protected createQueryBuilder(
+    filter: FilterUserFavoriteRitualDto,
+  ): SelectQueryBuilder<UserFavoriteRitual> {
+    const queryBuilder =
+      this.userFavoriteRitualRepository.createQueryBuilder(
+        'userFavoriteRitual',
+      );
 
-  update(id: number, updateUserFavoriteRitualDto: UpdateUserFavoriteRitualDto) {
-    return `This action updates a #${id} userFavoriteRitual`;
-  }
+    // Apply soft delete filter by default
+    queryBuilder.andWhere('userFavoriteRitual.deletedAt IS NULL');
 
-  remove(id: number) {
-    return `This action removes a #${id} userFavoriteRitual`;
+    // Apply filters if provided
+    if (filter.userId) {
+      queryBuilder.andWhere('userFavoriteRitual.userId = :userId', {
+        userId: filter.userId,
+      });
+    }
+
+    if (filter.ritualId) {
+      queryBuilder.andWhere('userFavoriteRitual.ritualId = :ritualId', {
+        ritualId: filter.ritualId,
+      });
+    }
+
+    return queryBuilder;
   }
 }
