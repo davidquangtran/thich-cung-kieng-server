@@ -1,6 +1,8 @@
 import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsBoolean,
+  IsDate,
   IsEnum,
   IsNumber,
   IsOptional,
@@ -30,8 +32,9 @@ export class FilterRitualDto extends PartialType(BaseFilterDto) {
     example: '2023-10-01',
   })
   @IsOptional()
-  @IsString()
-  dateSolar?: string;
+  @Type(() => Date)
+  @IsDate()
+  dateSolar?: Date;
   @ApiPropertyOptional({
     description: 'Filter by ritual dateLunar',
     example: '15-08',

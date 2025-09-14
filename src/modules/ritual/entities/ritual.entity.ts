@@ -20,8 +20,8 @@ export class Ritual extends AbstractEntity {
   @Column({ name: 'date_lunar', type: 'varchar' })
   dateLunar: string;
 
-  @Column({ name: 'date_solar', type: 'date' })
-  dateSolar: string;
+  @Column({ name: 'date_solar' })
+  dateSolar: Date;
 
   @Column({
     name: 'difficulty_level',
