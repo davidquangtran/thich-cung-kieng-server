@@ -1,28 +1,26 @@
 import { AbstractEntity } from 'src/common/base/entity.base';
+import { MediaType } from 'src/common/enums/media.enum';
 import { Ritual } from 'src/modules/ritual/entities/ritual.entity';
 import { Column, Entity, ManyToOne } from 'typeorm';
 
-@Entity({ name: 'prayers' })
-export class Prayer extends AbstractEntity {
-  @Column()
-  name: string;
-
-  @Column()
-  content: string;
+@Entity({ name: 'ritual_medias' })
+export class RitualMedia extends AbstractEntity {
+  @Column({ type: 'enum', enum: MediaType, default: MediaType.IMAGE })
+  type: MediaType;
 
   @Column({ nullable: true })
-  note: string;
+  url: string;
 
   @Column({ nullable: true })
-  description: string;
+  alt: string;
 
   @Column({ name: 'ritual_id' })
   ritualId: string;
 
-  @ManyToOne(() => Ritual, (ritual) => ritual.prayers)
+  @ManyToOne(() => Ritual, (ritual) => ritual.ritualMedias)
   ritual: Ritual;
 
-  constructor(partial: Partial<Prayer>) {
+  constructor(partial: Partial<RitualMedia>) {
     super();
     Object.assign(this, partial);
   }

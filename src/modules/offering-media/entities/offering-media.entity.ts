@@ -1,24 +1,27 @@
-import { AbstractEntity } from "src/common/base/entity.base";
-import { MediaType } from "src/common/enums/media.enum";
-import { Offering } from "src/modules/offering/entities/offering.entity";
-import { Column, Entity, ManyToOne } from "typeorm";
+import { AbstractEntity } from 'src/common/base/entity.base';
+import { MediaType } from 'src/common/enums/media.enum';
+import { Offering } from 'src/modules/offering/entities/offering.entity';
+import { Column, Entity, ManyToOne } from 'typeorm';
 
 @Entity('offering_media')
 export class OfferingMedia extends AbstractEntity {
-    @Column({ type: 'enum', enum: MediaType, default: MediaType.IMAGE })
-    type: MediaType;
+  @Column({ type: 'enum', enum: MediaType, default: MediaType.IMAGE })
+  type: MediaType;
 
-    @Column({ nullable: true })
-    url: string;
+  @Column({ nullable: true })
+  url: string;
 
-    @Column({ nullable: true })
-    alt: string;
+  @Column({ nullable: true })
+  alt: string;
 
-    @ManyToOne(() => Offering, (offering) => offering.offeringMedias)
-    offering: Offering;
+  @Column({ name: 'offering_id' })
+  offeringId: string;
 
-    constructor(partial: Partial<OfferingMedia>) {
-        super();
-        Object.assign(this, partial);
-    }
+  @ManyToOne(() => Offering, (offering) => offering.offeringMedias)
+  offering: Offering;
+
+  constructor(partial: Partial<OfferingMedia>) {
+    super();
+    Object.assign(this, partial);
+  }
 }

@@ -1,27 +1,29 @@
-import { AbstractEntity } from "src/common/base/entity.base";
-import { Ceremony } from "src/modules/ceremony/entities/ceremony.entity";
-import { OfferingMedia } from "src/modules/offering-media/entities/offering-media.entity";
-import { Column, Entity, ManyToOne, OneToMany } from "typeorm";
+import { AbstractEntity } from 'src/common/base/entity.base';
+import { Ritual } from 'src/modules/ritual/entities/ritual.entity';
+import { OfferingMedia } from 'src/modules/offering-media/entities/offering-media.entity';
+import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
 
 @Entity({ name: 'offerings' })
 export class Offering extends AbstractEntity {
-    @Column()
-    name: string;
+  @Column()
+  name: string;
 
-    @Column()
-    quantity: number;
+  @Column()
+  quantity: number;
 
-    @Column({ nullable: true })
-    description: string;
+  @Column({ nullable: true })
+  description: string;
 
-    @ManyToOne(() => Ceremony, (ceremony) => ceremony.offerings)
-    ceremony: Ceremony;
+  @ManyToOne(() => Ritual, (ritual) => ritual.offerings)
+  ritual: Ritual;
 
-    @OneToMany(() => OfferingMedia, (offeringMedia) => offeringMedia.offering, { cascade: true })
-    offeringMedias: OfferingMedia[];
+  @OneToMany(() => OfferingMedia, (offeringMedia) => offeringMedia.offering, {
+    cascade: true,
+  })
+  offeringMedias: OfferingMedia[];
 
-    constructor(partial: Partial<Offering>) {
-        super();
-        Object.assign(this, partial);
-    }
+  constructor(partial: Partial<Offering>) {
+    super();
+    Object.assign(this, partial);
+  }
 }

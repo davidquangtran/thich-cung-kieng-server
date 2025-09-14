@@ -15,9 +15,9 @@ import { PerformanceInterceptor } from './common/interceptors/performance.interc
 import { JwtModule } from './modules/auth/jwt/jwt.module';
 import { ChatSessionModule } from './modules/chat-session/chat-session.module';
 import { ChatMessageModule } from './modules/chat-message/chat-message.module';
-import { CeremonyModule } from './modules/ceremony/ceremony.module';
-import { CeremonyMediaModule } from './modules/ceremony-media/ceremony-media.module';
-import { CeremonyTagModule } from './modules/ceremony-tag/ceremony-tag.module';
+import { RitualModule } from './modules/ritual/ritual.module';
+import { RitualMediaModule } from './modules/ritual-media/ritual-media.module';
+import { RitualTagModule } from './modules/ritual-tag/ritual-tag.module';
 import { OfferingModule } from './modules/offering/offering.module';
 import { OfferingMediaModule } from './modules/offering-media/offering-media.module';
 import { PaymentModule } from './modules/payment/payment.module';
@@ -47,9 +47,9 @@ import { UserSubscriptionModule } from './modules/user-subscription/user-subscri
     UserModule,
     ChatSessionModule,
     ChatMessageModule,
-    CeremonyModule,
-    CeremonyMediaModule,
-    CeremonyTagModule,
+    RitualModule,
+    RitualMediaModule,
+    RitualTagModule,
     OfferingModule,
     OfferingMediaModule,
     PaymentModule,

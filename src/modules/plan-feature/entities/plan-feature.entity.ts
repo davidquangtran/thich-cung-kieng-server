@@ -1,24 +1,30 @@
-import { AbstractEntity } from "src/common/base/entity.base";
-import { SubscriptionFeature } from "src/modules/subscription-feature/entities/subscription-feature.entity";
-import { SubscriptionPlan } from "src/modules/subscription-plan/entities/subscription-plan.entity";
-import { Column, Entity, ManyToOne } from "typeorm";
+import { AbstractEntity } from 'src/common/base/entity.base';
+import { SubscriptionFeature } from 'src/modules/subscription-feature/entities/subscription-feature.entity';
+import { SubscriptionPlan } from 'src/modules/subscription-plan/entities/subscription-plan.entity';
+import { Column, Entity, ManyToOne } from 'typeorm';
 
 @Entity({ name: 'plan_features' })
 export class PlanFeature extends AbstractEntity {
-    @Column()
-    subscriptionPlanId: string;
+  @Column({ name: 'subscription_plan_id' })
+  subscriptionPlanId: string;
 
-    @Column()
-    subscriptionFeatureId: string;
+  @Column({ name: 'subscription_feature_id' })
+  subscriptionFeatureId: string;
 
-    @ManyToOne(() => SubscriptionFeature, (subscriptionFeature) => subscriptionFeature.planFeatures)
-    subscriptionFeature: SubscriptionFeature;
+  @ManyToOne(
+    () => SubscriptionFeature,
+    (subscriptionFeature) => subscriptionFeature.planFeatures,
+  )
+  subscriptionFeature: SubscriptionFeature;
 
-    @ManyToOne(() => SubscriptionPlan, (subscriptionPlan) => subscriptionPlan.planFeatures)
-    subscriptionPlan: SubscriptionPlan;
+  @ManyToOne(
+    () => SubscriptionPlan,
+    (subscriptionPlan) => subscriptionPlan.planFeatures,
+  )
+  subscriptionPlan: SubscriptionPlan;
 
-    constructor(partial: Partial<PlanFeature>) {
-        super();
-        Object.assign(this, partial);
-    }
+  constructor(partial: Partial<PlanFeature>) {
+    super();
+    Object.assign(this, partial);
+  }
 }
