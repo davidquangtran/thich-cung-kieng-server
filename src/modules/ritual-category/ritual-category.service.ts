@@ -31,12 +31,13 @@ export class RitualCategoryService extends BaseService<RitualCategory> {
   protected createQueryBuilder(
     filter: FilterRitualCategoryDto,
   ): SelectQueryBuilder<RitualCategory> {
+    const aliasName = RitualCategory.name.toLowerCase();
     const queryBuilder =
-      this.ritualCategoryRepository.createQueryBuilder('ritualcategory');
+      this.ritualCategoryRepository.createQueryBuilder(aliasName);
 
     // Apply filters if provided
     if (filter.name) {
-      queryBuilder.andWhere(`ritualcategory.name ILIKE :name`, {
+      queryBuilder.andWhere(`${aliasName}.name ILIKE :name`, {
         name: `%${filter.name}%`,
       });
     }

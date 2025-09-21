@@ -4,6 +4,7 @@ import { CACHE_FIELD_DETAIL } from '../../constants/cache.constant';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AbstractEntity } from '../entity.base';
 import { QueryServiceBase } from './query-service.base';
+import { TransactionContextService } from 'src/common/context/transaction.context';
 
 @Injectable()
 export abstract class BaseService<
@@ -16,11 +17,27 @@ export abstract class BaseService<
   async create(createDto: DeepPartial<T>): Promise<T> {
     try {
       if (!createDto) throw new Error('Data to create is required');
+
+      // Validation
       const duplicateFields = this.getDuplicateFields();
       await this.checkDuplicateField(duplicateFields, createDto);
       await this.validateCreateInput(createDto);
-      const entity = this.repository.create(createDto);
-      return await this.repository.save(entity);
+
+      // ** KEY PART: Tự động detect transaction context **
+      const transactionManager = TransactionContextService.getManager();
+
+      if (transactionManager) {
+        // Đang trong transaction - sử dụng transaction repository
+        const transactionRepo = transactionManager.getRepository(
+          this.repository.target,
+        );
+        const entity = transactionRepo.create(createDto);
+        return await transactionRepo.save(entity);
+      } else {
+        // Không trong transaction - sử dụng repository bình thường
+        const entity = this.repository.create(createDto);
+        return await this.repository.save(entity);
+      }
     } catch (error) {
       this.logger.error(`Error creating ${this.getEntityName()}:`, error);
       throw error;
@@ -34,18 +51,17 @@ export abstract class BaseService<
     return await this.repository.manager.transaction(
       async (manager: EntityManager) => {
         try {
-          if (!createDto) throw new Error('Data to create is required');
-          const duplicateFields = this.getDuplicateFields();
-          await this.checkDuplicateField(duplicateFields, createDto);
-          const entity = this.repository.create(createDto);
-          const savedEntity = await manager.save(entity);
-          if (relationData && Object.keys(relationData).length > 0) {
-            await this.createRelationships(manager, savedEntity, relationData);
-          }
-          this.logger.log(
-            `Created ${this.getEntityName()} with relations, id: ${savedEntity.id}`,
+          return await TransactionContextService.runWithManager(
+            manager,
+            async () => {
+              const entity = await this.create(createDto);
+              await this.createRelationships(manager, entity, relationData);
+              this.logger.log(
+                `Created ${this.getEntityName()} with relations, id: ${entity.id}`,
+              );
+              return entity;
+            },
           );
-          return savedEntity;
         } catch (error) {
           this.logger.error(
             `Error creating ${this.getEntityName()} with relations:`,
@@ -59,12 +75,27 @@ export abstract class BaseService<
 
   async update(id: string, updateDto: DeepPartial<T>): Promise<T | null> {
     try {
+      // Validation
       const entity = await this.findOne(id);
       if (!entity) return null;
+
       const duplicateFields = this.getDuplicateFields();
       await this.checkDuplicateField(duplicateFields, updateDto);
-      this.repository.merge(entity, updateDto);
-      return await this.repository.save(entity);
+      await this.validateUpdateInput(updateDto);
+
+      // ** Tự động detect transaction context **
+      const transactionManager = TransactionContextService.getManager();
+
+      if (transactionManager) {
+        const transactionRepo = transactionManager.getRepository(
+          this.repository.target,
+        );
+        transactionRepo.merge(entity, updateDto);
+        return await transactionRepo.save(entity);
+      } else {
+        this.repository.merge(entity, updateDto);
+        return await this.repository.save(entity);
+      }
     } catch (error) {
       this.logger.error(
         `Error updating ${this.getEntityName()} with id ${id}:`,
@@ -273,5 +304,21 @@ export abstract class BaseService<
   ): Promise<void> {
     // Override in child classes for custom validation
     // Default: no validation
+  }
+
+  /**
+   * Check if a foreign key exists in the database.
+   * @param entityName  The name of the entity to check.
+   * @param foreignKeyId  The foreign key ID to check.
+   * @returns  True if the foreign key exists, false otherwise.
+   */
+  protected async checkForeignKeyExist(
+    entityName: string,
+    foreignKeyId: string,
+  ): Promise<boolean> {
+    if (!entityName || !foreignKeyId) return false;
+    const repository = this.repository.manager.getRepository(entityName);
+    const count = await repository.count({ where: { id: foreignKeyId } });
+    return count > 0;
   }
 }

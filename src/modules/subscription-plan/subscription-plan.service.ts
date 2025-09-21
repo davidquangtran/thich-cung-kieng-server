@@ -31,33 +31,34 @@ export class SubscriptionPlanService extends BaseService<SubscriptionPlan> {
   protected createQueryBuilder(
     filter: FilterSubscriptionPlanDto,
   ): SelectQueryBuilder<SubscriptionPlan> {
+    const aliasName = SubscriptionPlan.name.toLowerCase();
     const queryBuilder =
-      this.subscriptionPlanRepository.createQueryBuilder('subscriptionPlan');
+      this.subscriptionPlanRepository.createQueryBuilder(aliasName);
 
     // Apply soft delete filter by default
-    queryBuilder.andWhere('subscriptionPlan.deletedAt IS NULL');
+    queryBuilder.andWhere(`${aliasName}.deletedAt IS NULL`);
 
     // Apply filters if provided
     if (filter.name) {
-      queryBuilder.andWhere('subscriptionPlan.name ILIKE :name', {
+      queryBuilder.andWhere(`${aliasName}.name ILIKE :name`, {
         name: `%${filter.name}%`,
       });
     }
 
     if (filter.description) {
-      queryBuilder.andWhere('subscriptionPlan.description ILIKE :description', {
+      queryBuilder.andWhere(`${aliasName}.description ILIKE :description`, {
         description: `%${filter.description}%`,
       });
     }
 
     if (filter.price) {
-      queryBuilder.andWhere('subscriptionPlan.price = :price', {
+      queryBuilder.andWhere(`${aliasName}.price = :price`, {
         price: filter.price,
       });
     }
 
     if (filter.durationDays) {
-      queryBuilder.andWhere('subscriptionPlan.durationDays = :durationDays', {
+      queryBuilder.andWhere(`${aliasName}.durationDays = :durationDays`, {
         durationDays: filter.durationDays,
       });
     }

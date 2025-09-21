@@ -33,6 +33,8 @@ import { UserEventReminderModule } from './modules/user_event_reminder/user_even
 import { UserSubscriptionModule } from './modules/user-subscription/user-subscription.module';
 import { RitualCategoryModule } from './modules/ritual-category/ritual-category.module';
 import { UserFavoriteRitualModule } from './modules/user-favorite-ritual/user-favorite-ritual.module';
+import { OfferingRitualModule } from './modules/offering-ritual/offering-ritual.module';
+import { RequestContextInterceptor } from './common/interceptors/request-context.interceptor';
 
 @Module({
   imports: [
@@ -55,6 +57,7 @@ import { UserFavoriteRitualModule } from './modules/user-favorite-ritual/user-fa
     RitualCategoryModule,
     OfferingModule,
     OfferingMediaModule,
+    OfferingRitualModule,
     PaymentModule,
     PaymentLogModule,
     PlanFeatureModule,
@@ -81,6 +84,10 @@ import { UserFavoriteRitualModule } from './modules/user-favorite-ritual/user-fa
     {
       provide: APP_INTERCEPTOR,
       useClass: GlobalResponseInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RequestContextInterceptor,
     },
     {
       provide: APP_INTERCEPTOR,

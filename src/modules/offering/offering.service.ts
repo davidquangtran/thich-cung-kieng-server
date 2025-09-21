@@ -32,16 +32,11 @@ export class OfferingService extends BaseService<Offering> {
   protected createQueryBuilder(
     filter: FilterOfferingDto,
   ): SelectQueryBuilder<Offering> {
-    const queryBuilder = this.offeringRepository.createQueryBuilder('offering');
+    const aliasName = Offering.name.toLowerCase();
+    const queryBuilder = this.offeringRepository.createQueryBuilder(aliasName);
 
     // Apply soft delete filter by default
-    queryBuilder.andWhere('offering.deletedAt IS NULL');
-
-    if (filter.quantity) {
-      queryBuilder.andWhere('offering.quantity = :quantity', {
-        price: filter.quantity,
-      });
-    }
+    queryBuilder.andWhere(`${aliasName}.deletedAt IS NULL`);
 
     return queryBuilder;
   }

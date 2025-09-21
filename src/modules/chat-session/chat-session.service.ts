@@ -34,15 +34,16 @@ export class ChatSessionService extends BaseService<ChatSession> {
   protected createQueryBuilder(
     filter: FilterChatSessionDto,
   ): SelectQueryBuilder<ChatSession> {
+    const aliasName = ChatSession.name.toLowerCase();
     const queryBuilder =
-      this.chatSessionRepository.createQueryBuilder('chatsession');
+      this.chatSessionRepository.createQueryBuilder(aliasName);
 
     // Apply soft delete filter by default
-    queryBuilder.andWhere('chatsession.deletedAt IS NULL');
+    queryBuilder.andWhere(`${aliasName}.deletedAt IS NULL`);
 
     // Apply filters if provided
     if (filter.userId) {
-      queryBuilder.andWhere('chatsession.userId = :userId', {
+      queryBuilder.andWhere(`${aliasName}.userId = :userId`, {
         userId: filter.userId,
       });
     }

@@ -9,5 +9,6 @@ import { RedisModule } from 'src/shared/redis/redis.module';
   imports: [TypeOrmModule.forFeature([RitualMedia], 'postgresql'), RedisModule],
   controllers: [RitualMediaController],
   providers: [RitualMediaService],
+  exports: [RitualMediaService],
 })
 export class RitualMediaModule {}

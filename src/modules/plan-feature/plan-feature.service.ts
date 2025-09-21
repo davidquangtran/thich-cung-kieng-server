@@ -33,16 +33,17 @@ export class PlanFeatureService extends BaseService<PlanFeature> {
   protected createQueryBuilder(
     filter: FilterPlanFeatureDto,
   ): SelectQueryBuilder<PlanFeature> {
+    const aliasName = PlanFeature.name.toLowerCase();
     const queryBuilder =
-      this.planFeatureRepository.createQueryBuilder('planFeature');
+      this.planFeatureRepository.createQueryBuilder(aliasName);
 
     // Apply soft delete filter by default
-    queryBuilder.andWhere('planFeature.deletedAt IS NULL');
+    queryBuilder.andWhere(`${aliasName}.deletedAt IS NULL`);
 
     // Apply filters if provided
     if (filter.subscriptionPlanId) {
       queryBuilder.andWhere(
-        'planFeature.subscriptionPlanId = :subscriptionPlanId',
+        `${aliasName}.subscriptionPlanId = :subscriptionPlanId`,
         {
           subscriptionPlanId: filter.subscriptionPlanId,
         },
@@ -51,7 +52,7 @@ export class PlanFeatureService extends BaseService<PlanFeature> {
 
     if (filter.subscriptionFeatureId) {
       queryBuilder.andWhere(
-        'planFeature.subscriptionFeatureId = :subscriptionFeatureId',
+        `${aliasName}.subscriptionFeatureId = :subscriptionFeatureId`,
         {
           subscriptionFeatureId: filter.subscriptionFeatureId,
         },

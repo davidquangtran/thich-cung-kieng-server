@@ -31,23 +31,23 @@ export class UserFavoriteRitualService extends BaseService<UserFavoriteRitual> {
   protected createQueryBuilder(
     filter: FilterUserFavoriteRitualDto,
   ): SelectQueryBuilder<UserFavoriteRitual> {
-    const queryBuilder =
-      this.userFavoriteRitualRepository.createQueryBuilder(
-        'userFavoriteRitual',
-      );
+    const aliasName = UserFavoriteRitual.name.toLowerCase();
+    const queryBuilder = this.userFavoriteRitualRepository.createQueryBuilder(
+      `${aliasName}`,
+    );
 
     // Apply soft delete filter by default
-    queryBuilder.andWhere('userFavoriteRitual.deletedAt IS NULL');
+    queryBuilder.andWhere(`${aliasName}.deletedAt IS NULL`);
 
     // Apply filters if provided
     if (filter.userId) {
-      queryBuilder.andWhere('userFavoriteRitual.userId = :userId', {
+      queryBuilder.andWhere(`${aliasName}.userId = :userId`, {
         userId: filter.userId,
       });
     }
 
     if (filter.ritualId) {
-      queryBuilder.andWhere('userFavoriteRitual.ritualId = :ritualId', {
+      queryBuilder.andWhere(`${aliasName}.ritualId = :ritualId`, {
         ritualId: filter.ritualId,
       });
     }

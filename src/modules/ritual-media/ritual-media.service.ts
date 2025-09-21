@@ -31,33 +31,34 @@ export class RitualMediaService extends BaseService<RitualMedia> {
   protected createQueryBuilder(
     filter: FilterRitualMediaDto,
   ): SelectQueryBuilder<RitualMedia> {
+    const aliasName = RitualMedia.name.toLowerCase();
     const queryBuilder =
-      this.ritualMediaRepository.createQueryBuilder('ritualMedia');
+      this.ritualMediaRepository.createQueryBuilder(aliasName);
 
     // Apply soft delete filter by default
-    queryBuilder.andWhere('ritualMedia.deletedAt IS NULL');
+    queryBuilder.andWhere(`${aliasName}.deletedAt IS NULL`);
 
     // Apply filters if provided
     if (filter.url) {
-      queryBuilder.andWhere('ritualMedia.url ILIKE :url', {
+      queryBuilder.andWhere(`${aliasName}.url ILIKE :url`, {
         url: `%${filter.url}%`,
       });
     }
 
     if (filter.alt) {
-      queryBuilder.andWhere('ritualMedia.alt ILIKE :alt', {
+      queryBuilder.andWhere(`${aliasName}.alt ILIKE :alt`, {
         alt: `%${filter.alt}%`,
       });
     }
 
     if (filter.type) {
-      queryBuilder.andWhere('ritualMedia.type = :type', {
+      queryBuilder.andWhere(`${aliasName}.type = :type`, {
         type: filter.type,
       });
     }
 
     if (filter.ritualId) {
-      queryBuilder.andWhere('ritualMedia.ritualId = :ritualId', {
+      queryBuilder.andWhere(`${aliasName}.ritualId = :ritualId`, {
         ritualId: filter.ritualId,
       });
     }

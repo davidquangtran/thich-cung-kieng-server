@@ -13,7 +13,7 @@ import { Public } from 'src/common/decorators/public.decorator';
 import { OfferingService } from './offering.service';
 import { CreateOfferingDto } from './dto/create-offering.dto';
 import { UpdateOfferingDto } from './dto/update-offering.dto';
-import { FilterChatSessionDto } from '../chat-session/dto/filter-chat-session.dto';
+import { FilterOfferingDto } from './dto/filter-offering.dto';
 
 @Public()
 @ApiTags('Offerings')
@@ -30,7 +30,7 @@ export class OfferingController {
   }
 
   @Get()
-  findAll(@Query() filter: FilterChatSessionDto) {
+  findAll(@Query() filter: FilterOfferingDto) {
     return this.offeringService.findAll(filter, [], []);
   }
 

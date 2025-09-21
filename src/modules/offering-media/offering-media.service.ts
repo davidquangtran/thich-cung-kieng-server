@@ -31,33 +31,34 @@ export class OfferingMediaService extends BaseService<OfferingMedia> {
   protected createQueryBuilder(
     filter: FilterOfferingMediaDto,
   ): SelectQueryBuilder<OfferingMedia> {
+    const aliasName = OfferingMedia.name.toLowerCase();
     const queryBuilder =
-      this.offeringMediaRepository.createQueryBuilder('offeringmedia');
+      this.offeringMediaRepository.createQueryBuilder(aliasName);
 
     // Apply soft delete filter by default
-    queryBuilder.andWhere('offeringmedia.deletedAt IS NULL');
+    queryBuilder.andWhere(`${aliasName}.deletedAt IS NULL`);
 
     // Apply filters if provided
     if (filter.url) {
-      queryBuilder.andWhere('offeringmedia.url ILIKE :url', {
+      queryBuilder.andWhere(`${aliasName}.url ILIKE :url`, {
         url: `%${filter.url}%`,
       });
     }
 
     if (filter.alt) {
-      queryBuilder.andWhere('offeringmedia.alt ILIKE :alt', {
+      queryBuilder.andWhere(`${aliasName}.alt ILIKE :alt`, {
         alt: `%${filter.alt}%`,
       });
     }
 
     if (filter.type) {
-      queryBuilder.andWhere('offeringmedia.type = :type', {
+      queryBuilder.andWhere(`${aliasName}.type = :type`, {
         type: filter.type,
       });
     }
 
     if (filter.offeringId) {
-      queryBuilder.andWhere('offeringmedia.offeringId = :offeringId', {
+      queryBuilder.andWhere(`${aliasName}.offeringId = :offeringId`, {
         offeringId: filter.offeringId,
       });
     }

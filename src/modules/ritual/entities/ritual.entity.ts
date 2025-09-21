@@ -2,12 +2,12 @@ import { AbstractEntity } from 'src/common/base/entity.base';
 import { DifficultyLevel } from 'src/common/enums/ritual.enum';
 import { RitualMedia } from 'src/modules/ritual-media/entities/ritual-media.entity';
 import { RitualTag } from 'src/modules/ritual-tag/entities/ritual-tag.entity';
-import { Offering } from 'src/modules/offering/entities/offering.entity';
 import { Prayer } from 'src/modules/prayer/entities/prayer.entity';
 import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
 import { RitualReview } from 'src/modules/ritual-review/entities/ritual-review.entity';
 import { RitualCategory } from 'src/modules/ritual-category/entities/ritual-category.entity';
 import { UserFavoriteRitual } from 'src/modules/user-favorite-ritual/entities/user-favorite-ritual.entity';
+import { OfferingRitual } from 'src/modules/offering-ritual/entities/offering-ritual.entity';
 
 @Entity({ name: 'rituals' })
 export class Ritual extends AbstractEntity {
@@ -56,8 +56,10 @@ export class Ritual extends AbstractEntity {
   })
   ritualTags: RitualTag[];
 
-  @OneToMany(() => Offering, (offering) => offering.ritual, { cascade: true })
-  offerings: Offering[];
+  @OneToMany(() => OfferingRitual, (offeringRitual) => offeringRitual.ritual, {
+    cascade: true,
+  })
+  offerings: OfferingRitual[];
 
   @OneToMany(() => Prayer, (prayer) => prayer.ritual, { cascade: true })
   prayers: Prayer[];

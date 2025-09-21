@@ -1,17 +1,20 @@
 import { Exclude } from 'class-transformer';
 import {
   BaseEntity,
+  BeforeInsert,
+  BeforeUpdate,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { RequestContextService } from '../context/request.context';
 
 export abstract class AbstractEntity extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
-  
+
   @CreateDateColumn({
     name: 'created_at',
     type: 'timestamp',
@@ -53,4 +56,25 @@ export abstract class AbstractEntity extends BaseEntity {
   })
   @Exclude()
   deletedAt: Date;
+
+  @BeforeInsert()
+  setCreatedBy() {
+    if (process.env.NODE_ENV !== 'test') {
+      const userId = RequestContextService.getCurrentUserId() || 'system';
+      if (userId) {
+        this.createdBy = userId;
+        this.updatedBy = userId;
+      }
+    }
+  }
+
+  @BeforeUpdate()
+  setUpdatedBy() {
+    if (process.env.NODE_ENV !== 'test') {
+      const userId = RequestContextService.getCurrentUserId() || 'system';
+      if (userId) {
+        this.updatedBy = userId;
+      }
+    }
+  }
 }

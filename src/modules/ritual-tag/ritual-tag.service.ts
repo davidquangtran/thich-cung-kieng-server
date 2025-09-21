@@ -31,21 +31,21 @@ export class RitualTagService extends BaseService<RitualTag> {
   protected createQueryBuilder(
     filter: FilterRitualTagDto,
   ): SelectQueryBuilder<RitualTag> {
-    const queryBuilder =
-      this.ritualTagRepository.createQueryBuilder('ritualTag');
+    const aliasName = RitualTag.name.toLowerCase();
+    const queryBuilder = this.ritualTagRepository.createQueryBuilder(aliasName);
 
     // Apply soft delete filter by default
-    queryBuilder.andWhere('ritualTag.deletedAt IS NULL');
+    queryBuilder.andWhere(`${aliasName}.deletedAt IS NULL`);
 
     // Apply filters if provided
     if (filter.ritualId) {
-      queryBuilder.andWhere('ritualTag.ritualId = :ritualId', {
+      queryBuilder.andWhere(`${aliasName}.ritualId = :ritualId`, {
         ritualId: filter.ritualId,
       });
     }
 
     if (filter.tagId) {
-      queryBuilder.andWhere('ritualTag.tagId = :tagId', {
+      queryBuilder.andWhere(`${aliasName}.tagId = :tagId`, {
         tagId: filter.tagId,
       });
     }

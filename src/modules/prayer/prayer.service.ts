@@ -31,20 +31,21 @@ export class PrayerService extends BaseService<Prayer> {
   protected createQueryBuilder(
     filter: FilterPrayerDto,
   ): SelectQueryBuilder<Prayer> {
-    const queryBuilder = this.prayerRepository.createQueryBuilder('prayer');
+    const aliasName = Prayer.name.toLowerCase();
+    const queryBuilder = this.prayerRepository.createQueryBuilder(aliasName);
 
     // Apply soft delete filter by default
-    queryBuilder.andWhere('prayer.deletedAt IS NULL');
+    queryBuilder.andWhere(`${aliasName}.deletedAt IS NULL`);
 
     // Apply filters if provided
     if (filter.name) {
-      queryBuilder.andWhere('prayer.name ILIKE :name', {
+      queryBuilder.andWhere(`${aliasName}.name ILIKE :name`, {
         name: `%${filter.name}%`,
       });
     }
 
     if (filter.ritualId) {
-      queryBuilder.andWhere('prayer.ritualId = :ritualId', {
+      queryBuilder.andWhere(`${aliasName}.ritualId = :ritualId`, {
         ritualId: filter.ritualId,
       });
     }

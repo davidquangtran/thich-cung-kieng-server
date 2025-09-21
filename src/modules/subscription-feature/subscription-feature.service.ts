@@ -6,6 +6,7 @@ import { SubscriptionFeature } from './entities/subscription-feature.entity';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { RedisService } from 'src/shared/redis/redis.service';
 import { BaseService } from 'src/common/base/service/service.base';
+import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
 
 @Injectable()
 export class SubscriptionFeatureService extends BaseService<SubscriptionFeature> {
@@ -30,30 +31,14 @@ export class SubscriptionFeatureService extends BaseService<SubscriptionFeature>
   }
 
   protected createQueryBuilder(
-    filter: any,
+    filter: BaseFilterDto,
   ): SelectQueryBuilder<SubscriptionFeature> {
-    const queryBuilder = this.subscriptionFeatureRepository.createQueryBuilder(
-      'subscriptionFeature',
-    );
+    const aliasName = SubscriptionFeature.name.toLowerCase();
+    const queryBuilder =
+      this.subscriptionFeatureRepository.createQueryBuilder(aliasName);
 
     // Apply soft delete filter by default
-    queryBuilder.andWhere('subscriptionFeature.deletedAt IS NULL');
-
-    // Apply filters if provided
-    if (filter.name) {
-      queryBuilder.andWhere('subscriptionFeature.name ILIKE :name', {
-        name: `%${filter.name}%`,
-      });
-    }
-
-    if (filter.description) {
-      queryBuilder.andWhere(
-        'subscriptionFeature.description ILIKE :description',
-        {
-          description: `%${filter.description}%`,
-        },
-      );
-    }
+    queryBuilder.andWhere(`${aliasName}.deletedAt IS NULL`);
 
     return queryBuilder;
   }

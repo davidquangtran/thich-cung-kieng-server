@@ -31,27 +31,28 @@ export class PaymentLogService extends BaseService<PaymentLog> {
   protected createQueryBuilder(
     filter: FilterPaymentLogDto,
   ): SelectQueryBuilder<PaymentLog> {
+    const aliasName = PaymentLog.name.toLowerCase();
     const queryBuilder =
-      this.paymentLogRepository.createQueryBuilder('paymentlog');
+      this.paymentLogRepository.createQueryBuilder(aliasName);
 
     // Apply soft delete filter by default
-    queryBuilder.andWhere('paymentLog.deletedAt IS NULL');
+    queryBuilder.andWhere(`${aliasName}.deletedAt IS NULL`);
 
     // Apply filters if provided
     if (filter.oldStatus) {
-      queryBuilder.andWhere('paymentLog.oldStatus = :oldStatus', {
-        old_status: filter.oldStatus,
+      queryBuilder.andWhere(`${aliasName}.oldStatus = :oldStatus`, {
+        oldStatus: filter.oldStatus,
       });
     }
 
     if (filter.newStatus) {
-      queryBuilder.andWhere('paymentLog.newStatus = :newStatus', {
-        new_status: filter.newStatus,
+      queryBuilder.andWhere(`${aliasName}.newStatus = :newStatus`, {
+        newStatus: filter.newStatus,
       });
     }
 
     if (filter.paymentId) {
-      queryBuilder.andWhere('paymentLog.paymentId = :paymentId', {
+      queryBuilder.andWhere(`${aliasName}.paymentId = :paymentId`, {
         paymentId: filter.paymentId,
       });
     }

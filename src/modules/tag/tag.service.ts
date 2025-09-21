@@ -4,6 +4,7 @@ import { Tag } from './entities/tag.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { RedisService } from 'src/shared/redis/redis.service';
+import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
 
 @Injectable()
 export class TagService extends BaseService<Tag> {
@@ -20,7 +21,7 @@ export class TagService extends BaseService<Tag> {
   }
 
   protected getDefaultRelations(): string[] {
-    return [];
+    return ['ritualTags', 'ritualTags.ritual'];
   }
 
   protected getSearchableFields(): string[] {
@@ -28,17 +29,11 @@ export class TagService extends BaseService<Tag> {
   }
 
   protected createQueryBuilder(filter: any): SelectQueryBuilder<Tag> {
-    const queryBuilder = this.tagRepository.createQueryBuilder('tag');
+    const aliasName = Tag.name.toLowerCase();
+    const queryBuilder = this.tagRepository.createQueryBuilder(aliasName);
 
     // Apply soft delete filter by default
-    queryBuilder.andWhere('tag.deletedAt IS NULL');
-
-    // Apply filters if provided
-    if (filter.name) {
-      queryBuilder.andWhere('tag.name ILIKE :name', {
-        name: `%${filter.name}%`,
-      });
-    }
+    queryBuilder.andWhere(`${aliasName}.deletedAt IS NULL`);
 
     return queryBuilder;
   }

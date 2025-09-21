@@ -31,32 +31,33 @@ export class PaymentService extends BaseService<Payment> {
   protected createQueryBuilder(
     filter: FilterPaymentDto,
   ): SelectQueryBuilder<Payment> {
-    const queryBuilder = this.paymentRepository.createQueryBuilder('payment');
+    const aliasName = Payment.name.toLowerCase();
+    const queryBuilder = this.paymentRepository.createQueryBuilder(aliasName);
 
     // Apply soft delete filter by default
-    queryBuilder.andWhere('payment.deletedAt IS NULL');
+    queryBuilder.andWhere(`${aliasName}.deletedAt IS NULL`);
 
     if (filter.status) {
-      queryBuilder.andWhere('payment.status = :status', {
+      queryBuilder.andWhere(`${aliasName}.status = :status`, {
         status: filter.status,
       });
     }
 
     if (filter.provider) {
-      queryBuilder.andWhere('payment.provider = :provider', {
+      queryBuilder.andWhere(`${aliasName}.provider = :provider`, {
         provider: filter.provider,
       });
     }
 
     if (filter.userId) {
-      queryBuilder.andWhere('payment.userId = :userId', {
+      queryBuilder.andWhere(`${aliasName}.userId = :userId`, {
         userId: filter.userId,
       });
     }
 
     if (filter.userSubscriptionId) {
       queryBuilder.andWhere(
-        'payment.userSubscriptionId = :userSubscriptionId',
+        `${aliasName}.userSubscriptionId = :userSubscriptionId`,
         {
           userSubscriptionId: filter.userSubscriptionId,
         },

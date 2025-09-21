@@ -31,33 +31,34 @@ export class RitualReviewService extends BaseService<RitualReview> {
   protected createQueryBuilder(
     filter: FilterRitualReviewDto,
   ): SelectQueryBuilder<RitualReview> {
+    const aliasName = RitualReview.name.toLowerCase();
     const queryBuilder =
-      this.ritualReviewRepository.createQueryBuilder('ritualReview');
+      this.ritualReviewRepository.createQueryBuilder(aliasName);
 
     // Apply soft delete filter by default
-    queryBuilder.andWhere('ritualReview.deletedAt IS NULL');
+    queryBuilder.andWhere(`${aliasName}.deletedAt IS NULL`);
 
     // Apply filters if provided
     if (filter.comment) {
-      queryBuilder.andWhere('ritualReview.comment ILIKE :comment', {
+      queryBuilder.andWhere(`${aliasName}.comment ILIKE :comment`, {
         comment: `%${filter.comment}%`,
       });
     }
 
     if (filter.rating) {
-      queryBuilder.andWhere('ritualReview.rating = :rating', {
+      queryBuilder.andWhere(`${aliasName}.rating = :rating`, {
         rating: filter.rating,
       });
     }
 
     if (filter.ritualId) {
-      queryBuilder.andWhere('ritualReview.ritualId = :ritualId', {
+      queryBuilder.andWhere(`${aliasName}.ritualId = :ritualId`, {
         ritualId: filter.ritualId,
       });
     }
 
     if (filter.userId) {
-      queryBuilder.andWhere('ritualReview.userId = :userId', {
+      queryBuilder.andWhere(`${aliasName}.userId = :userId`, {
         userId: filter.userId,
       });
     }

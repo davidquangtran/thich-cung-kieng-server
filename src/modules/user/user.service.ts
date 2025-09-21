@@ -28,32 +28,33 @@ export class UserService extends BaseService<User> {
   }
 
   protected createQueryBuilder(filter: any): SelectQueryBuilder<User> {
-    const queryBuilder = this.userRepository.createQueryBuilder('user');
+    const aliasName = User.name.toLowerCase();
+    const queryBuilder = this.userRepository.createQueryBuilder(aliasName);
 
     // Apply soft delete filter by default
-    queryBuilder.andWhere('user.deletedAt IS NULL');
+    queryBuilder.andWhere(`${aliasName}.deletedAt IS NULL`);
 
     // Apply filters if provided
     if (filter.email) {
-      queryBuilder.andWhere('user.email ILIKE :email', {
+      queryBuilder.andWhere(`${aliasName}.email ILIKE :email`, {
         email: `%${filter.email}%`,
       });
     }
 
     if (filter.fullName) {
-      queryBuilder.andWhere('user.fullName ILIKE :fullName', {
+      queryBuilder.andWhere(`${aliasName}.fullName ILIKE :fullName`, {
         fullName: `%${filter.fullName}%`,
       });
     }
 
     if (filter.phone) {
-      queryBuilder.andWhere('user.phone ILIKE :phone', {
+      queryBuilder.andWhere(`${aliasName}.phone ILIKE :phone`, {
         phone: `%${filter.phone}%`,
       });
     }
 
     if (filter.role) {
-      queryBuilder.andWhere('user.role = :role', {
+      queryBuilder.andWhere(`${aliasName}.role = :role`, {
         role: filter.role,
       });
     }

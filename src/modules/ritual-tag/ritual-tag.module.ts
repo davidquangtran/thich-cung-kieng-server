@@ -9,5 +9,6 @@ import { RedisModule } from 'src/shared/redis/redis.module';
   imports: [TypeOrmModule.forFeature([RitualTag], 'postgresql'), RedisModule],
   controllers: [RitualTagController],
   providers: [RitualTagService],
+  exports: [RitualTagService],
 })
 export class RitualTagModule {}

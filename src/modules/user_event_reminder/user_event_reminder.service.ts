@@ -30,39 +30,27 @@ export class UserEventReminderService extends BaseService<UserEventReminder> {
   }
 
   protected createQueryBuilder(
-    keyword?: string,
-    filters?: Record<string, any>,
+    filters?: any,
   ): SelectQueryBuilder<UserEventReminder> {
+    const aliasName = UserEventReminder.name.toLowerCase();
     const queryBuilder = this.userEventReminderRepository
-      .createQueryBuilder('userEventReminder')
-      .where('userEventReminder.deletedAt IS NULL');
-
-    if (keyword) {
-      const searchableFields = this.getSearchableFields();
-      if (searchableFields.length > 0) {
-        const searchConditions = searchableFields
-          .map((field) => `userEventReminder.${field} ILIKE :keyword`)
-          .join(' OR ');
-        queryBuilder.andWhere(`(${searchConditions})`, {
-          keyword: `%${keyword}%`,
-        });
-      }
-    }
+      .createQueryBuilder(`${aliasName}`)
+      .where(`${aliasName}.deletedAt IS NULL`);
 
     if (filters?.userEventId) {
-      queryBuilder.andWhere('userEventReminder.userEventId = :userEventId', {
+      queryBuilder.andWhere(`${aliasName}.userEventId = :userEventId`, {
         userEventId: filters.userEventId,
       });
     }
 
     if (filters?.status) {
-      queryBuilder.andWhere('userEventReminder.status = :status', {
+      queryBuilder.andWhere(`${aliasName}.status = :status`, {
         status: filters.status,
       });
     }
 
     if (filters?.notifyMethod) {
-      queryBuilder.andWhere('userEventReminder.notifyMethod = :notifyMethod', {
+      queryBuilder.andWhere(`${aliasName}.notifyMethod = :notifyMethod`, {
         notifyMethod: filters.notifyMethod,
       });
     }

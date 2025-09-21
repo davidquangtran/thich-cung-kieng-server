@@ -31,28 +31,30 @@ export class UserEventService extends BaseService<UserEvent> {
   protected createQueryBuilder(
     filter: FilterUserEvent,
   ): SelectQueryBuilder<UserEvent> {
-    const queryBuilder =
-      this.userEventRepository.createQueryBuilder('userEvent');
+    const aliasName = UserEvent.name.toLowerCase();
+    const queryBuilder = this.userEventRepository.createQueryBuilder(
+      `${aliasName}`,
+    );
 
     // Apply soft delete filter by default
-    queryBuilder.andWhere('userEvent.deletedAt IS NULL');
+    queryBuilder.andWhere(`${aliasName}.deletedAt IS NULL`);
 
     // Apply filters if provided
     if (filter.userId) {
-      queryBuilder.andWhere('userEvent.userId = :userId', {
+      queryBuilder.andWhere(`${aliasName}.userId = :userId`, {
         userId: filter.userId,
       });
     }
 
     if (filter.status) {
-      queryBuilder.andWhere('userEvent.status = :status', {
+      queryBuilder.andWhere(`${aliasName}.status = :status`, {
         status: filter.status,
       });
     }
 
     if (filter.eventDate) {
-      queryBuilder.andWhere('userEvent.eventDate = :eventDate', {
-        startDate: filter.eventDate,
+      queryBuilder.andWhere(`${aliasName}.eventDate = :eventDate`, {
+        eventDate: filter.eventDate,
       });
     }
 

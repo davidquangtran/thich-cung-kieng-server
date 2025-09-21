@@ -31,32 +31,33 @@ export class UserSubscriptionService extends BaseService<UserSubscription> {
   protected createQueryBuilder(
     filters: FilterUserSubsciptionDto,
   ): SelectQueryBuilder<UserSubscription> {
+    const aliasName = UserSubscription.name.toLowerCase();
     const queryBuilder = this.userSubscriptionRepository
-      .createQueryBuilder('userSubscription')
-      .where('userSubscription.deletedAt IS NULL');
+      .createQueryBuilder(`${aliasName}`)
+      .where(`${aliasName}.deletedAt IS NULL`);
 
     if (filters?.userId) {
-      queryBuilder.andWhere('userSubscription.userId = :userId', {
+      queryBuilder.andWhere(`${aliasName}.userId = :userId`, {
         userId: filters.userId,
       });
     }
 
     if (filters?.subscriptionPlanId) {
       queryBuilder.andWhere(
-        'userSubscription.subscriptionPlanId = :subscriptionPlanId',
+        `${aliasName}.subscriptionPlanId = :subscriptionPlanId`,
         { subscriptionPlanId: filters.subscriptionPlanId },
       );
     }
 
     if (filters?.status) {
-      queryBuilder.andWhere('userSubscription.status = :status', {
+      queryBuilder.andWhere(`${aliasName}.status = :status`, {
         status: filters.status,
       });
     }
 
     if (filters?.autoRenew !== undefined) {
-      queryBuilder.andWhere('userSubscription.autoRenew = :autoRenew', {
-        isActive: filters.autoRenew,
+      queryBuilder.andWhere(`${aliasName}.autoRenew = :autoRenew`, {
+        autoRenew: filters.autoRenew,
       });
     }
 

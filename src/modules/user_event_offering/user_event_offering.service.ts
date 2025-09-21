@@ -30,38 +30,23 @@ export class UserEventOfferingService extends BaseService<UserEventOffering> {
   }
 
   protected createQueryBuilder(
-    keyword?: string,
-    filters?: Record<string, any>,
+    filters?: any,
   ): SelectQueryBuilder<UserEventOffering> {
+    const aliasName = UserEventOffering.name.toLowerCase();
     const queryBuilder = this.userEventOfferingRepository
-      .createQueryBuilder('userEventOffering')
-      .where('userEventOffering.deletedAt IS NULL');
-
-    if (keyword) {
-      const searchableFields = this.getSearchableFields();
-      if (searchableFields.length > 0) {
-        const searchConditions = searchableFields
-          .map((field) => `userEventOffering.${field} ILIKE :keyword`)
-          .join(' OR ');
-        queryBuilder.andWhere(`(${searchConditions})`, {
-          keyword: `%${keyword}%`,
-        });
-      }
-    }
+      .createQueryBuilder(`${aliasName}`)
+      .where(`${aliasName}.deletedAt IS NULL`);
 
     if (filters?.userEventId) {
-      queryBuilder.andWhere('userEventOffering.userEventId = :userEventId', {
+      queryBuilder.andWhere(`${aliasName}.userEventId = :userEventId`, {
         userEventId: filters.userEventId,
       });
     }
 
     if (filters?.offeringName) {
-      queryBuilder.andWhere(
-        'userEventOffering.offeringName ILIKE :offeringName',
-        {
-          offeringName: `%${filters.offeringName}%`,
-        },
-      );
+      queryBuilder.andWhere(`${aliasName}.offeringName ILIKE :offeringName`, {
+        offeringName: `%${filters.offeringName}%`,
+      });
     }
 
     return queryBuilder;
