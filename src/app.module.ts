@@ -33,8 +33,8 @@ import { UserEventReminderModule } from './modules/user_event_reminder/user_even
 import { UserSubscriptionModule } from './modules/user-subscription/user-subscription.module';
 import { RitualCategoryModule } from './modules/ritual-category/ritual-category.module';
 import { UserFavoriteRitualModule } from './modules/user-favorite-ritual/user-favorite-ritual.module';
-import { OfferingRitualModule } from './modules/offering-ritual/ritual-offering.module';
 import { RequestContextInterceptor } from './common/interceptors/request-context.interceptor';
+import { OfferingRitualModule } from './modules/ritual-offering/ritual-offering.module';
 
 @Module({
   imports: [

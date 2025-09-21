@@ -9,7 +9,7 @@ import { CreateRitualDto } from './dto/create-ritual.dto';
 import { RitualCategory } from '../ritual-category/entities/ritual-category.entity';
 import { RitualMediaService } from '../ritual-media/ritual-media.service';
 import { RitualTagService } from '../ritual-tag/ritual-tag.service';
-import { RitualOfferingService } from '../offering-ritual/ritual-offering.service';
+import { RitualOfferingService } from '../ritual-offering/ritual-offering.service';
 
 @Injectable()
 export class RitualService extends BaseService<Ritual> {

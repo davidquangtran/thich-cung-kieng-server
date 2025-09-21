@@ -7,7 +7,7 @@ import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
 import { RitualReview } from 'src/modules/ritual-review/entities/ritual-review.entity';
 import { RitualCategory } from 'src/modules/ritual-category/entities/ritual-category.entity';
 import { UserFavoriteRitual } from 'src/modules/user-favorite-ritual/entities/user-favorite-ritual.entity';
-import { RitualOffering } from 'src/modules/offering-ritual/entities/ritual-offering.entity';
+import { RitualOffering } from 'src/modules/ritual-offering/entities/ritual-offering.entity';
 
 @Entity({ name: 'rituals' })
 export class Ritual extends AbstractEntity {

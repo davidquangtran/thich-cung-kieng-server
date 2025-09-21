@@ -1,8 +1,7 @@
 import { AbstractEntity } from 'src/common/base/entity.base';
-import { Ritual } from 'src/modules/ritual/entities/ritual.entity';
 import { OfferingMedia } from 'src/modules/offering-media/entities/offering-media.entity';
-import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
-import { RitualOffering } from 'src/modules/offering-ritual/entities/ritual-offering.entity';
+import { RitualOffering } from 'src/modules/ritual-offering/entities/ritual-offering.entity';
+import { Column, Entity, OneToMany } from 'typeorm';
 
 @Entity({ name: 'offerings' })
 export class Offering extends AbstractEntity {
