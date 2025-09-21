@@ -14,6 +14,7 @@ import { OfferingService } from './offering.service';
 import { CreateOfferingDto } from './dto/create-offering.dto';
 import { UpdateOfferingDto } from './dto/update-offering.dto';
 import { FilterOfferingDto } from './dto/filter-offering.dto';
+import { CreateOfferingWithRelationsDto } from './dto/create-offering-with-relations.dto';
 
 @Public()
 @ApiTags('Offerings')
@@ -25,8 +26,22 @@ export class OfferingController {
   @ApiOperation({ summary: 'Create a new offering' })
   @ApiBody({ type: CreateOfferingDto })
   @ApiResponse({ status: 201, description: 'Offering created successfully' })
-  create(@Body() createOfferingDto: CreateOfferingDto) {
+  async create(@Body() createOfferingDto: CreateOfferingDto) {
     return this.offeringService.create(createOfferingDto);
+  }
+
+  @Post('with-relations')
+  @ApiOperation({ summary: 'Create a new offering' })
+  @ApiBody({ type: CreateOfferingWithRelationsDto })
+  @ApiResponse({ status: 201, description: 'Offering created successfully' })
+  async createWithRelations(@Body() body: CreateOfferingWithRelationsDto) {
+    const { offering, relations } = body;
+
+    if (relations && Object.keys(relations).length > 0) {
+      return this.offeringService.createWithRelations(offering, relations);
+    } else {
+      return this.offeringService.create(offering);
+    }
   }
 
   @Get()

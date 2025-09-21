@@ -3,8 +3,8 @@ import { Offering } from 'src/modules/offering/entities/offering.entity';
 import { Ritual } from 'src/modules/ritual/entities/ritual.entity';
 import { Column, Entity, ManyToOne } from 'typeorm';
 
-@Entity({ name: 'offering_rituals' })
-export class OfferingRitual extends AbstractEntity {
+@Entity({ name: 'ritual_offerings' })
+export class RitualOffering extends AbstractEntity {
   @Column({ name: 'ritual_id' })
   ritualId: string;
 
@@ -20,7 +20,7 @@ export class OfferingRitual extends AbstractEntity {
   @ManyToOne(() => Offering, (offering) => offering.id)
   offering: Offering;
 
-  constructor(partial: Partial<OfferingRitual>) {
+  constructor(partial: Partial<RitualOffering>) {
     super();
     Object.assign(this, partial);
   }

@@ -12,5 +12,6 @@ import { RedisModule } from 'src/shared/redis/redis.module';
   ],
   controllers: [OfferingMediaController],
   providers: [OfferingMediaService],
+  exports: [OfferingMediaService],
 })
 export class OfferingMediaModule {}

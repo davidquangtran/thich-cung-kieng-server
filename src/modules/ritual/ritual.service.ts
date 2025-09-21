@@ -7,9 +7,9 @@ import { RedisService } from 'src/shared/redis/redis.service';
 import { FilterRitualDto } from './dto/filter-ritual.dto';
 import { CreateRitualDto } from './dto/create-ritual.dto';
 import { RitualCategory } from '../ritual-category/entities/ritual-category.entity';
-import { OfferingRitualService } from '../offering-ritual/offering-ritual.service';
 import { RitualMediaService } from '../ritual-media/ritual-media.service';
 import { RitualTagService } from '../ritual-tag/ritual-tag.service';
+import { RitualOfferingService } from '../offering-ritual/ritual-offering.service';
 
 @Injectable()
 export class RitualService extends BaseService<Ritual> {
@@ -17,7 +17,7 @@ export class RitualService extends BaseService<Ritual> {
     @InjectRepository(Ritual, 'postgresql')
     private readonly ritualRepository: Repository<Ritual>,
     private readonly redisService: RedisService,
-    private readonly offeringRitualService: OfferingRitualService,
+    private readonly ritualOfferingService: RitualOfferingService,
     private readonly ritualMediaService: RitualMediaService,
     private readonly ritualTagService: RitualTagService,
   ) {
@@ -85,6 +85,7 @@ export class RitualService extends BaseService<Ritual> {
   protected async validateCreateInput(
     createDto: CreateRitualDto,
   ): Promise<void> {
+    if (!createDto) throw new BadRequestException('Data to create is required');
     if (createDto.ritualCategoryId) {
       const isCategoryExist = await this.checkForeignKeyExist(
         RitualCategory.name,
@@ -109,7 +110,7 @@ export class RitualService extends BaseService<Ritual> {
           offeringId: offering.offeringId,
           quantity: offering.quantity || 1,
         };
-        promises.push(this.offeringRitualService.create(ritualOffering));
+        promises.push(this.ritualOfferingService.create(ritualOffering));
       });
     }
     if (relationData?.ritualMedias?.length) {

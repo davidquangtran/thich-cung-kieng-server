@@ -16,8 +16,6 @@ export abstract class BaseService<
 
   async create(createDto: DeepPartial<T>): Promise<T> {
     try {
-      if (!createDto) throw new Error('Data to create is required');
-
       // Validation
       const duplicateFields = this.getDuplicateFields();
       await this.checkDuplicateField(duplicateFields, createDto);

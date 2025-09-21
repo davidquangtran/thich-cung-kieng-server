@@ -1,20 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { CreateOfferingRitualDto } from './dto/create-offering-ritual.dto';
-import { UpdateOfferingRitualDto } from './dto/update-offering-ritual.dto';
-import { OfferingRitual } from './entities/offering-ritual.entity';
 import { BaseService } from 'src/common/base/service/service.base';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { RedisService } from 'src/shared/redis/redis.service';
 import { InjectRepository } from '@nestjs/typeorm';
+import { RitualOffering } from './entities/ritual-offering.entity';
 
 @Injectable()
-export class OfferingRitualService extends BaseService<OfferingRitual> {
+export class RitualOfferingService extends BaseService<RitualOffering> {
   constructor(
-    @InjectRepository(OfferingRitual, 'postgresql')
-    private readonly offeringRitualRepository: Repository<OfferingRitual>,
+    @InjectRepository(RitualOffering, 'postgresql')
+    private readonly ritualOfferingRepository: Repository<RitualOffering>,
     private readonly redisService: RedisService,
   ) {
-    super(offeringRitualRepository, redisService);
+    super(ritualOfferingRepository, redisService);
   }
   protected getDuplicateFields(): string[] {
     return ['ritualId', 'offeringId'];
@@ -27,10 +25,10 @@ export class OfferingRitualService extends BaseService<OfferingRitual> {
   }
   protected createQueryBuilder(
     filter: any,
-  ): SelectQueryBuilder<OfferingRitual> {
-    const aliasName = OfferingRitual.name.toLowerCase();
+  ): SelectQueryBuilder<RitualOffering> {
+    const aliasName = RitualOffering.name.toLowerCase();
     const queryBuilder =
-      this.offeringRitualRepository.createQueryBuilder(aliasName);
+      this.ritualOfferingRepository.createQueryBuilder(aliasName);
 
     // Apply soft delete filter by default
     queryBuilder.andWhere(`${aliasName}.deletedAt IS NULL`);
