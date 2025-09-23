@@ -72,7 +72,9 @@ export class Ritual extends AbstractEntity {
   @ManyToOne(() => RitualCategory, (ritualCategory) => ritualCategory.rituals)
   ritualCategory: RitualCategory;
 
-  @OneToMany(() => UserFavoriteRitual, (ufr) => ufr.ritual)
+  @OneToMany(() => UserFavoriteRitual, (ufr) => ufr.ritual, {
+    cascade: true,
+  })
   favoriteByUsers: UserFavoriteRitual[];
 
   constructor(partial: Partial<Ritual>) {

@@ -76,6 +76,40 @@ export class RitualOfferingInputDto {
   quantity?: number = 1;
 }
 
+export class RitualPrayerInputDto {
+  @ApiProperty({
+    description: 'Name of the prayer',
+    example: 'Kinh cúng tổ tiên',
+  })
+  @IsString()
+  name: string;
+
+  @ApiProperty({
+    description: 'Content of the prayer',
+    example: 'Nam mô a di đà phật, kính cúng các bậc tổ tiên...',
+  })
+  @IsString()
+  content: string;
+
+  @ApiProperty({
+    description: 'Additional notes for the prayer',
+    example: 'Đọc 3 lần vào mỗi buổi sáng',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  note?: string;
+
+  @ApiProperty({
+    description: 'Description of the prayer',
+    example: 'Bài kinh cúng tổ tiên truyền thống',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  description?: string;
+}
+
 export class RitualRelationsDto {
   @ApiProperty({
     description: 'Ritual offerings to associate',
@@ -109,6 +143,17 @@ export class RitualRelationsDto {
   @ValidateNested({ each: true })
   @Type(() => RitualTagInputDto)
   ritualTags?: RitualTagInputDto[];
+
+  @ApiProperty({
+    description: 'Ritual prayers to associate',
+    type: [RitualPrayerInputDto],
+    required: false,
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => RitualPrayerInputDto)
+  ritualPrayers?: RitualPrayerInputDto[];
 }
 
 export class CreateRitualWithRelationsDto {

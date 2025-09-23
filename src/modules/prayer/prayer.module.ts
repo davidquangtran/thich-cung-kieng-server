@@ -9,5 +9,6 @@ import { RedisModule } from 'src/shared/redis/redis.module';
   imports: [TypeOrmModule.forFeature([Prayer], 'postgresql'), RedisModule],
   controllers: [PrayerController],
   providers: [PrayerService],
+  exports: [PrayerService],
 })
 export class PrayerModule {}

@@ -23,14 +23,6 @@ export class RitualController {
   constructor(private readonly ritualService: RitualService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new ritual' })
-  @ApiBody({ type: CreateRitualDto })
-  @ApiResponse({ status: 201, description: 'Ritual created successfully' })
-  async create(@Body() createRitualDto: CreateRitualDto) {
-    return await this.ritualService.create(createRitualDto);
-  }
-
-  @Post('with-relations')
   @ApiOperation({ summary: 'Create a new ritual with relations' })
   @ApiBody({ type: CreateRitualWithRelationsDto })
   @ApiResponse({
@@ -65,8 +57,15 @@ export class RitualController {
     return this.ritualService.update(id, updateRitualDto);
   }
 
+  @Patch(':id/soft-remove')
+  @ApiOperation({ summary: 'Soft Remove a ritual' })
+  @ApiResponse({ status: 200, description: 'Ritual soft removed successfully' })
+  softRemove(@Param('id') id: string) {
+    return this.ritualService.softRemove(id);
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.ritualService.delete(id);
+    return this.ritualService.remove(id);
   }
 }

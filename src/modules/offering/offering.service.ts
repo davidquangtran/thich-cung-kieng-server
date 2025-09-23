@@ -20,11 +20,11 @@ export class OfferingService extends BaseService<Offering> {
     super(offeringRepository, redisService);
   }
   protected getDuplicateFields(): string[] {
-    return [];
+    return ['name'];
   }
 
   protected getDefaultRelations(): string[] {
-    return [];
+    return ['ritualOfferings', 'ritualOfferings.ritual'];
   }
 
   protected getSearchableFields(): string[] {

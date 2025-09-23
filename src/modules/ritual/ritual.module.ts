@@ -7,6 +7,7 @@ import { RedisModule } from 'src/shared/redis/redis.module';
 import { RitualMediaModule } from '../ritual-media/ritual-media.module';
 import { RitualTagModule } from '../ritual-tag/ritual-tag.module';
 import { OfferingRitualModule } from '../ritual-offering/ritual-offering.module';
+import { PrayerModule } from '../prayer/prayer.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { OfferingRitualModule } from '../ritual-offering/ritual-offering.module'
     OfferingRitualModule,
     RitualMediaModule,
     RitualTagModule,
+    PrayerModule,
   ],
   controllers: [RitualController],
   providers: [RitualService],

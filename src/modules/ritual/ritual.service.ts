@@ -10,6 +10,7 @@ import { RitualCategory } from '../ritual-category/entities/ritual-category.enti
 import { RitualMediaService } from '../ritual-media/ritual-media.service';
 import { RitualTagService } from '../ritual-tag/ritual-tag.service';
 import { RitualOfferingService } from '../ritual-offering/ritual-offering.service';
+import { PrayerService } from '../prayer/prayer.service';
 
 @Injectable()
 export class RitualService extends BaseService<Ritual> {
@@ -20,6 +21,7 @@ export class RitualService extends BaseService<Ritual> {
     private readonly ritualOfferingService: RitualOfferingService,
     private readonly ritualMediaService: RitualMediaService,
     private readonly ritualTagService: RitualTagService,
+    private readonly ritualPrayerService: PrayerService,
   ) {
     super(ritualRepository, redisService);
   }
@@ -29,7 +31,14 @@ export class RitualService extends BaseService<Ritual> {
   }
 
   protected getDefaultRelations(): string[] {
-    return ['ritualOfferings', 'ritualOfferings.offering'];
+    return [
+      'ritualMedias',
+      'ritualTags',
+      'offerings',
+      'prayers',
+      'ritualReviews',
+      'favoriteByUsers',
+    ];
   }
 
   protected getSearchableFields(): string[] {
@@ -131,6 +140,19 @@ export class RitualService extends BaseService<Ritual> {
           tagId: tag.tagId,
         };
         promises.push(this.ritualTagService.create(ritualTag));
+      });
+    }
+    if (relationData?.ritualPrayers?.length) {
+      relationData.ritualPrayers.forEach((prayer) => {
+        const ritualPrayer = {
+          ritualId: mainEntity.id,
+          prayerId: prayer.id,
+          name: prayer.name,
+          content: prayer.content,
+          note: prayer.note,
+          description: prayer.description,
+        };
+        promises.push(this.ritualPrayerService.create(ritualPrayer));
       });
     }
     if (promises.length > 0) {

@@ -1,5 +1,10 @@
 import { RedisService } from 'src/shared/redis/redis.service';
-import { DeepPartial, EntityManager, Repository } from 'typeorm';
+import {
+  DeepPartial,
+  EntityManager,
+  FindOptionsWhere,
+  Repository,
+} from 'typeorm';
 import { CACHE_FIELD_DETAIL } from '../../constants/cache.constant';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AbstractEntity } from '../entity.base';
@@ -185,12 +190,27 @@ export abstract class BaseService<
   async remove(id: string): Promise<void> {
     try {
       if (!id) throw new Error('ID to remove is required');
-      const entity = await this.findOne(id);
+
+      // Check if in transaction context
+      const transactionManager = TransactionContextService.getManager();
+      const repository = transactionManager
+        ? transactionManager.getRepository(this.repository.target)
+        : this.repository;
+
+      const entity = await repository.findOne({
+        where: { id } as any,
+        withDeleted: true,
+        relations: this.getDefaultRelations(),
+      });
+
       if (!entity) return;
-      await this.redis.del(
-        this.getCacheKey({ identifier: id, field: CACHE_FIELD_DETAIL }),
-      );
-      await this.repository.remove(entity);
+      this.logger.log(`Removing ${this.getEntityName()} with id ${id}`);
+      this.logger.log(`entity: ${JSON.stringify(entity)}`);
+      // await this.redis.del(
+      //   this.getCacheKey({ identifier: id, field: CACHE_FIELD_DETAIL }),
+      // );
+
+      // await repository.remove(entity);
     } catch (error) {
       this.logger.error(
         `Error deleting ${this.getEntityName()} with id ${id}:`,
@@ -199,7 +219,6 @@ export abstract class BaseService<
       throw error;
     }
   }
-
   async softRemove(id: string): Promise<void> {
     try {
       if (!id) throw new Error('ID to soft remove is required');
