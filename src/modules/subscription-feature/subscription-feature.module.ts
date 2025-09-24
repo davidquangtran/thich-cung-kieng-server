@@ -12,5 +12,6 @@ import { RedisModule } from 'src/shared/redis/redis.module';
   ],
   controllers: [SubscriptionFeatureController],
   providers: [SubscriptionFeatureService],
+  exports: [SubscriptionFeatureService],
 })
 export class SubscriptionFeatureModule {}

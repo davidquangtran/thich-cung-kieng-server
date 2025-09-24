@@ -19,7 +19,7 @@ export class PlanFeatureService extends BaseService<PlanFeature> {
   }
 
   protected getDuplicateFields(): string[] {
-    return ['subscriptionPlanId', 'subscriptionFeatureId'];
+    return [];
   }
 
   protected getDefaultRelations(): string[] {

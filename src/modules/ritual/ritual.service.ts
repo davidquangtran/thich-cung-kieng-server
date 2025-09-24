@@ -12,6 +12,8 @@ import { RitualTagService } from '../ritual-tag/ritual-tag.service';
 import { RitualOfferingService } from '../ritual-offering/ritual-offering.service';
 import { PrayerService } from '../prayer/prayer.service';
 import { RitualOffering } from '../ritual-offering/entities/ritual-offering.entity';
+import { TagService } from '../tag/tag.service';
+import { OfferingService } from '../offering/offering.service';
 
 @Injectable()
 export class RitualService extends BaseService<Ritual> {
@@ -20,8 +22,10 @@ export class RitualService extends BaseService<Ritual> {
     private readonly ritualRepository: Repository<Ritual>,
     private readonly redisService: RedisService,
     private readonly ritualOfferingService: RitualOfferingService,
+    private readonly offeringService: OfferingService,
     private readonly ritualMediaService: RitualMediaService,
     private readonly ritualTagService: RitualTagService,
+    private readonly tagService: TagService,
     private readonly ritualPrayerService: PrayerService,
   ) {
     super(ritualRepository, redisService);
@@ -114,14 +118,24 @@ export class RitualService extends BaseService<Ritual> {
   ): Promise<void> {
     const promises: Promise<any>[] = [];
     if (relationData?.ritualOfferings?.length) {
-      relationData.ritualOfferings.forEach((offering) => {
+      for (const offering of relationData.ritualOfferings) {
+        const isOfferingExist = await this.offeringService.findOne(
+          offering.offeringId,
+        );
+        if (!isOfferingExist) {
+          throw new BadRequestException(
+            `Offering with id ${offering.offeringId} does not exist`,
+          );
+        }
+      }
+      for (const offering of relationData.ritualOfferings) {
         const ritualOffering = {
           ritualId: mainEntity.id,
           offeringId: offering.offeringId,
           quantity: offering.quantity || 1,
         };
         promises.push(this.ritualOfferingService.create(ritualOffering));
-      });
+      }
     }
     if (relationData?.ritualMedias?.length) {
       relationData.ritualMedias.forEach((media) => {
@@ -135,13 +149,21 @@ export class RitualService extends BaseService<Ritual> {
       });
     }
     if (relationData?.ritualTags?.length) {
-      relationData.ritualTags.forEach((tag) => {
+      for (const tag of relationData.ritualTags) {
+        const isTagExist = await this.tagService.findOne(tag.tagId);
+        if (!isTagExist) {
+          throw new BadRequestException(
+            `Tag with id ${tag.tagId} does not exist`,
+          );
+        }
+      }
+      for (const tag of relationData.ritualTags) {
         const ritualTag = {
           ritualId: mainEntity.id,
           tagId: tag.tagId,
         };
         promises.push(this.ritualTagService.create(ritualTag));
-      });
+      }
     }
     if (relationData?.ritualPrayers?.length) {
       relationData.ritualPrayers.forEach((prayer) => {
@@ -162,102 +184,6 @@ export class RitualService extends BaseService<Ritual> {
   }
 
   /**
-   * Smart update for individual relation properties
-   * Only updates specific fields instead of recreating entire relations
-   */
-  async updateRelationProperty(
-    relationId: string,
-    relationType: 'offering' | 'media' | 'tag' | 'prayer',
-    field: string,
-    value: any,
-  ): Promise<boolean> {
-    try {
-      switch (relationType) {
-        case 'offering':
-          return (
-            (await this.ritualOfferingService.updateField(
-              relationId,
-              field as any,
-              value,
-            )) !== null
-          );
-
-        case 'media':
-          return (
-            (await this.ritualMediaService.updateField(
-              relationId,
-              field as any,
-              value,
-            )) !== null
-          );
-
-        case 'tag':
-          return (
-            (await this.ritualTagService.updateField(
-              relationId,
-              field as any,
-              value,
-            )) !== null
-          );
-
-        case 'prayer':
-          return (
-            (await this.ritualPrayerService.updateField(
-              relationId,
-              field as any,
-              value,
-            )) !== null
-          );
-
-        default:
-          throw new BadRequestException(
-            `Unsupported relation type: ${relationType}`,
-          );
-      }
-    } catch (error) {
-      this.logger.error(
-        `Error updating ${relationType} field ${field} with id ${relationId}:`,
-        error,
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Batch update multiple relation properties efficiently
-   * Example: Update quantities for multiple offerings at once
-   */
-  async batchUpdateRelationProperties(
-    updates: Array<{
-      relationId: string;
-      relationType: 'offering' | 'media' | 'tag' | 'prayer';
-      updates: Record<string, any>;
-    }>,
-  ): Promise<boolean[]> {
-    const promises = updates.map(
-      ({ relationId, relationType, updates: updateData }) => {
-        switch (relationType) {
-          case 'offering':
-            return this.ritualOfferingService.update(relationId, updateData);
-          case 'media':
-            return this.ritualMediaService.update(relationId, updateData);
-          case 'tag':
-            return this.ritualTagService.update(relationId, updateData);
-          case 'prayer':
-            return this.ritualPrayerService.update(relationId, updateData);
-          default:
-            throw new BadRequestException(
-              `Unsupported relation type: ${relationType}`,
-            );
-        }
-      },
-    );
-
-    const results = await Promise.all(promises);
-    return results.map((result) => result !== null);
-  }
-
-  /**
    * Optimized updateRelationships with minimal changes approach
    * Only processes actual changes instead of full recreation
    */
@@ -270,9 +196,10 @@ export class RitualService extends BaseService<Ritual> {
 
     // Smart offering updates - only change what's different
     if (relationData?.ritualOfferings) {
-      const existingOfferings = await this.ritualOfferingService.findAllByOptions({
-        ritualId: mainEntity.id,
-      });
+      const existingOfferings =
+        await this.ritualOfferingService.findAllByOptions({
+          ritualId: mainEntity.id,
+        });
       const inputOfferings = relationData.ritualOfferings;
 
       // Create maps for easy lookup
@@ -327,7 +254,9 @@ export class RitualService extends BaseService<Ritual> {
       });
       const inputMedias = relationData.ritualMedias;
 
-      const existingMap = new Map((existingMedias ?? []).map((m) => [m.url, m]));
+      const existingMap = new Map(
+        (existingMedias ?? []).map((m) => [m.url, m]),
+      );
       const inputMap = new Map(inputMedias.map((m) => [m.url, m]));
 
       const toAdd = inputMedias.filter((input) => !existingMap.has(input.url));
@@ -375,7 +304,9 @@ export class RitualService extends BaseService<Ritual> {
       });
       const inputTags = relationData.ritualTags;
 
-      const existingMap = new Map((existingTags ?? []).map((t) => [t.tagId, t]));
+      const existingMap = new Map(
+        (existingTags ?? []).map((t) => [t.tagId, t]),
+      );
       const inputMap = new Map(inputTags.map((t) => [t.tagId, t]));
 
       const toAdd = inputTags.filter((input) => !existingMap.has(input.tagId));
@@ -407,9 +338,7 @@ export class RitualService extends BaseService<Ritual> {
       const existingMap = new Map(
         (existingPrayers ?? []).map((p) => [p.name, p]),
       );
-      const inputMap = new Map(
-        inputPrayers.map((p) => [p.name, p]),
-      );
+      const inputMap = new Map(inputPrayers.map((p) => [p.name, p]));
 
       const toAdd = inputPrayers.filter(
         (input) => !existingMap.has(input.name),

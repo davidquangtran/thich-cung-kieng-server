@@ -14,5 +14,6 @@ import { OfferingMediaModule } from '../offering-media/offering-media.module';
   ],
   controllers: [OfferingController],
   providers: [OfferingService],
+  exports: [OfferingService],
 })
 export class OfferingModule {}

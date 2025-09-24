@@ -7,12 +7,15 @@ import {
   Param,
   Delete,
   Query,
+  Put,
 } from '@nestjs/common';
 import { Public } from 'src/common/decorators/public.decorator';
 import { SubscriptionPlanService } from './subscription-plan.service';
 import { CreateSubscriptionPlanDto } from './dto/create-subscription-plan.dto';
 import { UpdateSubscriptionPlanDto } from './dto/update-subscription-plan.dto';
 import { FilterSubscriptionPlanDto } from './dto/filter-subscription-plan.dto';
+import { CreateSubscriptionPlanWithRelationDto } from './dto/create-subscription-plan-with-relation.dto';
+import { UpdateSubscriptionPlanWithRelationDto } from './dto/update-subscription-plan-with-relation.dto';
 
 @Public()
 @Controller('subscription-plan')
@@ -22,8 +25,17 @@ export class SubscriptionPlanController {
   ) {}
 
   @Post()
-  create(@Body() createSubscriptionPlanDto: CreateSubscriptionPlanDto) {
-    return this.subscriptionPlanService.create(createSubscriptionPlanDto);
+  async create(@Body() body: CreateSubscriptionPlanWithRelationDto) {
+    console.log(body);
+    const { subscriptionPlan, relations } = body;
+    if (relations && Object.keys(relations).length > 0) {
+      return await this.subscriptionPlanService.createWithRelations(
+        subscriptionPlan,
+        relations,
+      );
+    } else {
+      return await this.subscriptionPlanService.create(subscriptionPlan);
+    }
   }
 
   @Get()
@@ -36,16 +48,28 @@ export class SubscriptionPlanController {
     return this.subscriptionPlanService.findOne(id);
   }
 
-  @Patch(':id')
-  update(
+  @Put(':id')
+  async update(
     @Param('id') id: string,
-    @Body() updateSubscriptionPlanDto: UpdateSubscriptionPlanDto,
+    @Body() body: UpdateSubscriptionPlanWithRelationDto,
   ) {
-    return this.subscriptionPlanService.update(id, updateSubscriptionPlanDto);
+    const { subscriptionPlan, relations } = body;
+    if (relations && Object.keys(relations).length > 0) {
+      return await this.subscriptionPlanService.updateWithRelations(
+        id,
+        subscriptionPlan as UpdateSubscriptionPlanDto,
+        relations,
+      );
+    } else {
+      return await this.subscriptionPlanService.update(
+        id,
+        subscriptionPlan as UpdateSubscriptionPlanDto,
+      );
+    }
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.subscriptionPlanService.delete(id);
+  async remove(@Param('id') id: string) {
+    return await this.subscriptionPlanService.remove(id);
   }
 }

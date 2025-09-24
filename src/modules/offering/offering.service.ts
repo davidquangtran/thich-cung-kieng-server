@@ -73,52 +73,59 @@ export class OfferingService extends BaseService<Offering> {
     mainEntity: Offering,
     relationData?: Record<string, any>,
   ): Promise<void> {
-    if (!relationData) return;
+    const promises: Promise<any>[] = [];
 
-    // Handle offering media relationships
-    if (relationData.offeringMedias !== undefined) {
-      // Get existing media
+    // Smart offering updates - only change what's different
+    if (relationData?.offeringMedias) {
       const existingMedias = await this.offeringMediaService.findAllByOptions({
         offeringId: mainEntity.id,
       });
+      const inputMedias = relationData.offeringMedias;
 
-      const newMedias = relationData.offeringMedias || [];
-      const existingMediaIds = (existingMedias ?? []).map((media) => media.id);
-      const newMediaIds = newMedias
-        .filter((media) => media.id)
-        .map((media) => media.id);
+      // Create maps for easy lookup
+      const existingMap = new Map((existingMedias ?? []).map((o) => [o.id, o]));
+      const inputMap = new Map(inputMedias.map((o) => [o.id, o]));
 
-      // Remove medias that are not in the new list
-      const mediasToRemove = (existingMedias ?? []).filter(
-        (media) => !newMediaIds.includes(media.id),
+      // Find what to add, update, and remove
+      const toAdd = inputMedias.filter((input) => !existingMap.has(input.id));
+      const toRemove = (existingMedias ?? []).filter(
+        (existing) => !inputMap.has(existing.id),
       );
+      const toUpdate = inputMedias.filter((input) => {
+        const existing = existingMap.get(input.id);
+        return (
+          existing &&
+          (existing.type !== input.type || existing.alt !== input.alt)
+        );
+      });
 
-      if (mediasToRemove.length > 0) {
-        await manager.remove(OfferingMedia, mediasToRemove);
+      // Execute changes
+      for (const media of toAdd) {
+        promises.push(
+          this.offeringMediaService.create({
+            offeringId: mainEntity.id,
+            url: media.url,
+            type: media.type,
+            alt: media.alt,
+          }),
+        );
       }
 
-      // Add or update medias
-      const promises: Promise<any>[] = [];
+      for (const media of toRemove) {
+        promises.push(this.offeringMediaService.remove(media.id));
+      }
 
-      for (const mediaData of newMedias) {
-        if (mediaData.id && existingMediaIds.includes(mediaData.id)) {
-          // Update existing media
+      for (const media of toUpdate) {
+        const existing = existingMap.get(media.url);
+        if (existing?.id) {
           promises.push(
-            manager.update(OfferingMedia, mediaData.id, {
-              ...mediaData,
-              offeringId: mainEntity.id,
+            this.offeringMediaService.update(existing.id, {
+              type: media.type,
+              alt: media.alt,
             }),
           );
-        } else if (!mediaData.id) {
-          // Create new media
-          const newMedia = manager.create(OfferingMedia, {
-            ...mediaData,
-            offeringId: mainEntity.id,
-          });
-          promises.push(manager.save(OfferingMedia, newMedia));
         }
       }
-
       await Promise.all(promises);
     }
   }

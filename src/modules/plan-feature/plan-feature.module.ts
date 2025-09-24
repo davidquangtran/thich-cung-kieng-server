@@ -9,5 +9,6 @@ import { RedisModule } from 'src/shared/redis/redis.module';
   imports: [TypeOrmModule.forFeature([PlanFeature], 'postgresql'), RedisModule],
   controllers: [PlanFeatureController],
   providers: [PlanFeatureService],
+  exports: [PlanFeatureService],
 })
 export class PlanFeatureModule {}

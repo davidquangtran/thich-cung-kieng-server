@@ -13,6 +13,7 @@ import { SubscriptionFeatureService } from './subscription-feature.service';
 import { CreateSubscriptionFeatureDto } from './dto/create-subscription-feature.dto';
 import { UpdateSubscriptionFeatureDto } from './dto/update-subscription-feature.dto';
 import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
+import { ApiBody } from '@nestjs/swagger';
 
 @Public()
 @Controller('subscription-feature')
@@ -22,33 +23,38 @@ export class SubscriptionFeatureController {
   ) {}
 
   @Post()
-  create(@Body() createSubscriptionFeatureDto: CreateSubscriptionFeatureDto) {
-    return this.subscriptionFeatureService.create(createSubscriptionFeatureDto);
+  @ApiBody({ type: CreateSubscriptionFeatureDto })
+  async create(
+    @Body() createSubscriptionFeatureDto: CreateSubscriptionFeatureDto,
+  ) {
+    return await this.subscriptionFeatureService.create(
+      createSubscriptionFeatureDto,
+    );
   }
 
   @Get()
-  findAll(@Query() filter: BaseFilterDto) {
-    return this.subscriptionFeatureService.findAll(filter, [], []);
+  async findAll(@Query() filter: BaseFilterDto) {
+    return await this.subscriptionFeatureService.findAll(filter, [], []);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.subscriptionFeatureService.findOne(id);
+  async findOne(@Param('id') id: string) {
+    return await this.subscriptionFeatureService.findOne(id);
   }
 
   @Patch(':id')
-  update(
+  async update(
     @Param('id') id: string,
     @Body() updateSubscriptionFeatureDto: UpdateSubscriptionFeatureDto,
   ) {
-    return this.subscriptionFeatureService.update(
+    return await this.subscriptionFeatureService.update(
       id,
       updateSubscriptionFeatureDto,
     );
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.subscriptionFeatureService.remove(id);
+  async remove(@Param('id') id: string) {
+    return await this.subscriptionFeatureService.remove(id);
   }
 }
