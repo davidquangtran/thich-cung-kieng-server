@@ -17,7 +17,7 @@ export class RitualMediaService extends BaseService<RitualMedia> {
   }
 
   protected getDuplicateFields(): string[] {
-    return [];
+    return ['url'];
   }
 
   protected getDefaultRelations(): string[] {

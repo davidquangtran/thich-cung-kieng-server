@@ -36,7 +36,7 @@ export class ChatSessionController {
 
   @Get('me')
   findByMe(@GetUser('id') id: string) {
-    return this.chatSessionService.findByOptions({ userId: id });
+    return this.chatSessionService.findOneByOptions({ userId: id });
   }
 
   @Delete(':id')

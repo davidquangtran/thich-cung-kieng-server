@@ -82,8 +82,6 @@ export abstract class BaseService<
       const entity = await this.findOne(id);
       if (!entity) return null;
 
-      const duplicateFields = this.getDuplicateFields();
-      await this.checkDuplicateField(duplicateFields, updateDto);
       await this.validateUpdateInput(updateDto);
 
       // ** Tự động detect transaction context **
@@ -113,10 +111,23 @@ export abstract class BaseService<
       if (!id || !field) {
         throw new BadRequestException('ID and field to update are required');
       }
-      const entity = await this.findOne(id);
-      if (!entity) return null;
-      (entity as any)[field] = value;
-      return await this.repository.save(entity);
+      const transactionManager = TransactionContextService.getManager();
+      if (transactionManager) {
+        const transactionRepo = transactionManager.getRepository(
+          this.repository.target,
+        );
+        const entity = await transactionRepo.findOne({
+          where: { id, deletedAt: null } as any as FindOptionsWhere<T>,
+        });
+        if (!entity) return null;
+        (entity as any)[field] = value;
+        return await transactionRepo.save(entity);
+      } else {
+        const entity = await this.findOne(id);
+        if (!entity) return null;
+        (entity as any)[field] = value;
+        return await this.repository.save(entity);
+      }
     } catch (error) {
       this.logger.error(
         `Error updating field ${String(field)} of ${this.getEntityName()} with id ${id}:`,
@@ -134,29 +145,32 @@ export abstract class BaseService<
     return await this.repository.manager.transaction(
       async (manager: EntityManager) => {
         try {
-          if (!id || !updateDto) {
-            throw new BadRequestException('ID and update data are required');
-          }
-          const entity = await this.findOne(id);
-          if (!entity) return null;
+          return await TransactionContextService.runWithManager(
+            manager,
+            async () => {
+              if (!id || !updateDto) {
+                throw new BadRequestException(
+                  'ID and update data are required',
+                );
+              }
+              const entity = await this.findOne(id);
+              if (!entity) return null;
+              this.repository.merge(entity, updateDto);
+              const updatedEntity = await this.repository.save(entity);
+              if (relationData && Object.keys(relationData).length > 0) {
+                await this.updateRelationships(
+                  manager,
+                  updatedEntity,
+                  relationData,
+                );
+              }
 
-          const duplicateFields = this.getDuplicateFields();
-          await this.checkDuplicateField(duplicateFields, updateDto);
-          this.repository.merge(entity, updateDto);
-          const updatedEntity = await this.repository.save(entity);
-
-          if (relationData && Object.keys(relationData).length > 0) {
-            await this.updateRelationships(
-              manager,
-              updatedEntity,
-              relationData,
-            );
-          }
-
-          this.logger.log(
-            `Updated ${this.getEntityName()} with relations, id: ${updatedEntity.id}`,
+              this.logger.log(
+                `Updated ${this.getEntityName()} with relations, id: ${updatedEntity.id}`,
+              );
+              return updatedEntity;
+            },
           );
-          return updatedEntity;
         } catch (error) {
           this.logger.error(
             `Error updating ${this.getEntityName()} with id ${id} and relations:`,
@@ -206,11 +220,11 @@ export abstract class BaseService<
       if (!entity) return;
       this.logger.log(`Removing ${this.getEntityName()} with id ${id}`);
       this.logger.log(`entity: ${JSON.stringify(entity)}`);
-      // await this.redis.del(
-      //   this.getCacheKey({ identifier: id, field: CACHE_FIELD_DETAIL }),
-      // );
+      await this.redis.del(
+        this.getCacheKey({ identifier: id, field: CACHE_FIELD_DETAIL }),
+      );
 
-      // await repository.remove(entity);
+      await repository.remove(entity);
     } catch (error) {
       this.logger.error(
         `Error deleting ${this.getEntityName()} with id ${id}:`,
@@ -246,7 +260,7 @@ export abstract class BaseService<
       const value = data[field];
       if (!value) continue;
 
-      const isExisting = await this.findByOptions({
+      const isExisting = await this.findOneByOptions({
         [field]: value,
       } as any);
       if (isExisting) {

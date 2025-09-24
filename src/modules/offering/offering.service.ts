@@ -8,6 +8,7 @@ import { EntityManager, Repository, SelectQueryBuilder } from 'typeorm';
 import { RedisService } from 'src/shared/redis/redis.service';
 import { FilterOfferingDto } from './dto/filter-offering.dto';
 import { OfferingMediaService } from '../offering-media/offering-media.service';
+import { OfferingMedia } from '../offering-media/entities/offering-media.entity';
 
 @Injectable()
 export class OfferingService extends BaseService<Offering> {
@@ -48,6 +49,7 @@ export class OfferingService extends BaseService<Offering> {
   ): Promise<void> {
     if (!createDto) throw new BadRequestException('Data to create is required');
   }
+
   protected async createRelationships(
     manager: EntityManager,
     mainEntity: Offering,
@@ -64,5 +66,60 @@ export class OfferingService extends BaseService<Offering> {
       });
     }
     await Promise.all(promises);
+  }
+
+  protected async updateRelationships(
+    manager: EntityManager,
+    mainEntity: Offering,
+    relationData?: Record<string, any>,
+  ): Promise<void> {
+    if (!relationData) return;
+
+    // Handle offering media relationships
+    if (relationData.offeringMedias !== undefined) {
+      // Get existing media
+      const existingMedias = await this.offeringMediaService.findAllByOptions({
+        offeringId: mainEntity.id,
+      });
+
+      const newMedias = relationData.offeringMedias || [];
+      const existingMediaIds = (existingMedias ?? []).map((media) => media.id);
+      const newMediaIds = newMedias
+        .filter((media) => media.id)
+        .map((media) => media.id);
+
+      // Remove medias that are not in the new list
+      const mediasToRemove = (existingMedias ?? []).filter(
+        (media) => !newMediaIds.includes(media.id),
+      );
+
+      if (mediasToRemove.length > 0) {
+        await manager.remove(OfferingMedia, mediasToRemove);
+      }
+
+      // Add or update medias
+      const promises: Promise<any>[] = [];
+
+      for (const mediaData of newMedias) {
+        if (mediaData.id && existingMediaIds.includes(mediaData.id)) {
+          // Update existing media
+          promises.push(
+            manager.update(OfferingMedia, mediaData.id, {
+              ...mediaData,
+              offeringId: mainEntity.id,
+            }),
+          );
+        } else if (!mediaData.id) {
+          // Create new media
+          const newMedia = manager.create(OfferingMedia, {
+            ...mediaData,
+            offeringId: mainEntity.id,
+          });
+          promises.push(manager.save(OfferingMedia, newMedia));
+        }
+      }
+
+      await Promise.all(promises);
+    }
   }
 }

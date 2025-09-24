@@ -25,7 +25,6 @@ export abstract class AbstractEntity extends BaseEntity {
 
   @Column({
     name: 'created_by',
-    type: 'uuid',
     nullable: true,
     comment: 'ID người dùng tạo bản ghi',
   })
@@ -42,7 +41,6 @@ export abstract class AbstractEntity extends BaseEntity {
 
   @Column({
     name: 'updated_by',
-    type: 'uuid',
     nullable: true,
     comment: 'ID người dùng cập nhật bản ghi lần cuối',
   })

@@ -17,7 +17,7 @@ export class RitualTagService extends BaseService<RitualTag> {
   }
 
   protected getDuplicateFields(): string[] {
-    return ['ritualId', 'tagId'];
+    return [];
   }
 
   protected getDefaultRelations(): string[] {

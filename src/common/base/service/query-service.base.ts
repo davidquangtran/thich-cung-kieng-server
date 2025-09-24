@@ -4,7 +4,8 @@ import { RedisService } from 'src/shared/redis/redis.service';
 import { Logger } from '@nestjs/common';
 import {
   CACHE_FIELD_DETAIL,
-  CACHE_FIELD_FIND_OPTIONS,
+  CACHE_FIELD_FIND_ALL_OPTIONS,
+  CACHE_FIELD_FIND_ONE_OPTIONS,
   CACHE_FIELD_LIST_ALL_FILTER,
   CACHE_FIELD_SELECT_OPTIONS,
   CACHE_NAMESPACE,
@@ -131,11 +132,11 @@ export abstract class QueryServiceBase<T extends AbstractEntity> {
     }
   }
 
-  async findByOptions(options: FindOptionsWhere<T>): Promise<T | null> {
+  async findOneByOptions(options: FindOptionsWhere<T>): Promise<T | null> {
     try {
       const cacheKey = this.getCacheKey({
         identifier: JSON.stringify(options),
-        field: CACHE_FIELD_FIND_OPTIONS,
+        field: CACHE_FIELD_FIND_ONE_OPTIONS,
       });
       const cached = await this.redis.get<T>(cacheKey);
       if (cached) return cached;
@@ -175,6 +176,32 @@ export abstract class QueryServiceBase<T extends AbstractEntity> {
     } catch (error) {
       this.logger.error(
         `Error finding one ${this.getEntityName()} with id ${id}:`,
+        error,
+      );
+      throw error;
+    }
+  }
+
+  async findAllByOptions(options: FindOptionsWhere<T>): Promise<T[] | null> {
+    try {
+      const cacheKey = this.getCacheKey({
+        identifier: JSON.stringify(options),
+        field: CACHE_FIELD_FIND_ALL_OPTIONS,
+      });
+      const cached = await this.redis.get<T[]>(cacheKey);
+      if (cached) return cached;
+      const whereCondition = {
+        ...options,
+        deletedAt: null,
+      } as FindOptionsWhere<T>;
+      const result = await this.repository.find({
+        where: whereCondition,
+      });
+      if (result) await this.redis.set(cacheKey, result, TTL_SECONDS);
+      return result;
+    } catch (error) {
+      this.logger.error(
+        `Error finding ${this.getEntityName()} by options:`,
         error,
       );
       throw error;

@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Query,
+  Put,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { Public } from 'src/common/decorators/public.decorator';
@@ -15,6 +16,7 @@ import { CreateRitualDto } from './dto/create-ritual.dto';
 import { UpdateRitualDto } from './dto/update-ritual.dto';
 import { FilterRitualDto } from './dto/filter-ritual.dto';
 import { CreateRitualWithRelationsDto } from './dto/create-ritual-with-relations.dto';
+import { UpdateRitualWithRelationsDto } from './dto/update-ritual-with-relations.dto';
 
 @Public()
 @ApiTags('Rituals')
@@ -49,12 +51,17 @@ export class RitualController {
     return this.ritualService.findOne(id);
   }
 
-  @Patch(':id')
+  @Put(':id')
   @ApiOperation({ summary: 'Update a ritual' })
-  @ApiBody({ type: UpdateRitualDto })
+  @ApiBody({ type: UpdateRitualWithRelationsDto })
   @ApiResponse({ status: 200, description: 'Ritual updated successfully' })
-  update(@Param('id') id: string, @Body() updateRitualDto: UpdateRitualDto) {
-    return this.ritualService.update(id, updateRitualDto);
+  async update(@Param('id') id: string, @Body() body: UpdateRitualWithRelationsDto) {
+    const { ritual, relations } = body;
+    if (relations && Object.keys(relations).length > 0) {
+      return await this.ritualService.updateWithRelations(id, ritual, relations);
+    } else {
+      return await this.ritualService.update(id, ritual);
+    }
   }
 
   @Patch(':id/soft-remove')

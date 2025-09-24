@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Query,
+  Put,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { Public } from 'src/common/decorators/public.decorator';
@@ -15,6 +16,7 @@ import { CreateOfferingDto } from './dto/create-offering.dto';
 import { UpdateOfferingDto } from './dto/update-offering.dto';
 import { FilterOfferingDto } from './dto/filter-offering.dto';
 import { CreateOfferingWithRelationsDto } from './dto/create-offering-with-relations.dto';
+import { UpdateOfferingWithRelationsDto } from './dto/update-offering-with-relations.dto';
 
 @Public()
 @ApiTags('Offerings')
@@ -54,15 +56,26 @@ export class OfferingController {
     return this.offeringService.findOne(id);
   }
 
-  @Patch(':id')
-  update(
+  @Put(':id/with-relations')
+  @ApiOperation({ summary: 'Update an offering with relations' })
+  @ApiBody({ type: UpdateOfferingWithRelationsDto })
+  @ApiResponse({ status: 200, description: 'Offering updated successfully with relations' })
+  async updateWithRelations(
     @Param('id') id: string,
-    @Body() updateOfferingDto: UpdateOfferingDto,
+    @Body() body: UpdateOfferingWithRelationsDto,
   ) {
-    return this.offeringService.update(id, updateOfferingDto);
+    const { offering, relations } = body;
+
+    if (relations && Object.keys(relations).length > 0) {
+      return this.offeringService.updateWithRelations(id, offering, relations);
+    } else {
+      return this.offeringService.update(id, offering);
+    }
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Delete an offering' })
+  @ApiResponse({ status: 200, description: 'Offering deleted successfully' })
   remove(@Param('id') id: string) {
     return this.offeringService.delete(id);
   }
