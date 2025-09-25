@@ -12,5 +12,6 @@ import { RedisModule } from 'src/shared/redis/redis.module';
   ],
   controllers: [UserEventOfferingController],
   providers: [UserEventOfferingService],
+  exports: [UserEventOfferingService],
 })
 export class UserEventOfferingModule {}

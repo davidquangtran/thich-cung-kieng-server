@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { RedisService } from 'src/shared/redis/redis.service';
 import { FilterUserFavoriteRitualDto } from './dto/filter-user-favorite-ritual.dto';
+import { RitualService } from '../ritual/ritual.service';
 
 @Injectable()
 export class UserFavoriteRitualService extends BaseService<UserFavoriteRitual> {
@@ -14,6 +15,7 @@ export class UserFavoriteRitualService extends BaseService<UserFavoriteRitual> {
     @InjectRepository(UserFavoriteRitual, 'postgresql')
     private readonly userFavoriteRitualRepository: Repository<UserFavoriteRitual>,
     private readonly redisService: RedisService,
+    private readonly ritualService: RitualService,
   ) {
     super(userFavoriteRitualRepository, redisService);
   }
@@ -53,5 +55,19 @@ export class UserFavoriteRitualService extends BaseService<UserFavoriteRitual> {
     }
 
     return queryBuilder;
+  }
+
+  protected async validateCreateInput(
+    createDto: CreateUserFavoriteRitualDto,
+  ): Promise<void> {
+    if (!createDto) {
+      throw new Error('Invalid input');
+    }
+    const isRitualExisted = await this.ritualService.findOne(
+      createDto.ritualId,
+    );
+    if (!isRitualExisted) {
+      throw new Error('Ritual does not exist');
+    }
   }
 }

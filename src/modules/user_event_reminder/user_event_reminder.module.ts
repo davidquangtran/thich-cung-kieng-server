@@ -12,5 +12,6 @@ import { RedisModule } from 'src/shared/redis/redis.module';
   ],
   controllers: [UserEventReminderController],
   providers: [UserEventReminderService],
+  exports: [UserEventReminderService],
 })
 export class UserEventReminderModule {}

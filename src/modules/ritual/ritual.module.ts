@@ -24,5 +24,6 @@ import { OfferingModule } from '../offering/offering.module';
   ],
   controllers: [RitualController],
   providers: [RitualService],
+  exports: [RitualService],
 })
 export class RitualModule {}

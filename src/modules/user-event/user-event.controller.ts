@@ -7,12 +7,15 @@ import {
   Param,
   Delete,
   Query,
+  Put,
 } from '@nestjs/common';
 import { Public } from 'src/common/decorators/public.decorator';
 import { UserEventService } from './user-event.service';
 import { CreateUserEventDto } from './dto/create-user-event.dto';
 import { UpdateUserEventDto } from './dto/update-user-event.dto';
 import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
+import { CreateUserEventWithRelationshipDto } from './dto/create-user-event-with-relationship.dto';
+import { UpdateUserEventWithRelationshipDto } from './dto/update-user-event-with-relationship.dto';
 
 @Public()
 @Controller('user-event')
@@ -20,8 +23,13 @@ export class UserEventController {
   constructor(private readonly userEventService: UserEventService) {}
 
   @Post()
-  create(@Body() createUserEventDto: CreateUserEventDto) {
-    return this.userEventService.create(createUserEventDto);
+  create(@Body() body: CreateUserEventWithRelationshipDto) {
+    const { userEvent, relations } = body;
+    if (relations && Object.keys(relations).length > 0) {
+      return this.userEventService.createWithRelations(userEvent, relations);
+    } else {
+      return this.userEventService.create(userEvent);
+    }
   }
 
   @Get()
@@ -34,16 +42,25 @@ export class UserEventController {
     return this.userEventService.findOne(id);
   }
 
-  @Patch(':id')
+  @Put(':id')
   update(
     @Param('id') id: string,
-    @Body() updateUserEventDto: UpdateUserEventDto,
+    @Body() body: UpdateUserEventWithRelationshipDto,
   ) {
-    return this.userEventService.update(id, updateUserEventDto);
+    const { userEvent, relations } = body;
+    if (relations && Object.keys(relations).length > 0) {
+      return this.userEventService.updateWithRelations(
+        id,
+        userEvent as UpdateUserEventDto,
+        relations,
+      );
+    } else {
+      return this.userEventService.update(id, userEvent as UpdateUserEventDto);
+    }
   }
 
-  @Delete(':id')
+  @Patch(':id')
   remove(@Param('id') id: string) {
-    return this.userEventService.delete(id);
+    return this.userEventService.softRemove(id);
   }
 }
