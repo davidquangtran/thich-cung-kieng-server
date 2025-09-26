@@ -16,5 +16,6 @@ import { SubscriptionFeatureModule } from '../subscription-feature/subscription-
   ],
   controllers: [SubscriptionPlanController],
   providers: [SubscriptionPlanService],
+  exports: [SubscriptionPlanService],
 })
 export class SubscriptionPlanModule {}

@@ -6,11 +6,18 @@ import { UserModule } from '../user/user.module';
 import { GoogleStrategy } from './google/strategies/google.strategy';
 import { GoogleAuthService } from './google/services/google-auth.service';
 import { MailModule } from 'src/shared/mail/mail.module';
+import { SubscriptionCheckService } from './services/subscription-check.service';
+import { UserSubscriptionModule } from '../user-subscription/user-subscription.module';
 
 @Module({
-  imports: [UserModule, JwtModule, MailModule],
+  imports: [UserModule, JwtModule, MailModule, UserSubscriptionModule],
   controllers: [AuthController],
-  providers: [AuthService, GoogleStrategy, GoogleAuthService, AuthService],
-  exports: [AuthService, GoogleAuthService],
+  providers: [
+    AuthService,
+    GoogleStrategy,
+    GoogleAuthService,
+    SubscriptionCheckService,
+  ],
+  exports: [AuthService, GoogleAuthService, SubscriptionCheckService],
 })
 export class AuthModule {}

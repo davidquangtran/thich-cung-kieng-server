@@ -74,4 +74,12 @@ export default () => ({
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     callbackUrl: process.env.GOOGLE_CALLBACK_URL,
   },
+
+  // PayOS configuration
+  payos: {
+    clientId: process.env.PAYOS_CLIENT_ID,
+    apiKey: process.env.PAYOS_API_KEY,
+    checksumKey: process.env.PAYOS_CHECK_SUM_KEY,
+    webhookUrl: process.env.PAYOS_WEBHOOK_URL,
+  },
 });

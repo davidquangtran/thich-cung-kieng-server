@@ -11,6 +11,8 @@ import { JwtService } from './jwt/jwt.service';
 import { User } from '../user/entities/user.entity';
 import { GoogleLoginDto } from './google/dto/google-auth.dto';
 import { MailService } from 'src/shared/mail/mail.service';
+import { SubscriptionCheckService } from './services/subscription-check.service';
+import { LoginWithSubscriptionResponse } from './interfaces/subscription-check.interface';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +22,7 @@ export class AuthService {
     private readonly mailService: MailService,
     // private readonly emailQueueService: EmailQueueService,
     private readonly googleAuthService: GoogleAuthService,
+    private readonly subscriptionCheckService: SubscriptionCheckService,
   ) {}
   /**
    * Generate access and refresh tokens for the user
@@ -40,7 +43,7 @@ export class AuthService {
    * @param user Data from Google OAuth
    * @returns Tokens object containing access and refresh tokens
    */
-  async googleLogin(user: any): Promise<{ tokens: Tokens }> {
+  async googleLogin(user: any): Promise<LoginWithSubscriptionResponse> {
     const existingUser = await this.usersService.findOneByOptions({
       email: user.email,
     });
@@ -79,8 +82,19 @@ export class AuthService {
       this.usersService.updateField(id, 'refreshToken', tokens.refreshToken);
     }
 
+    // Check user subscription on login
+    let subscriptionInfo: any = null;
+    try {
+      subscriptionInfo =
+        await this.subscriptionCheckService.checkUserSubscriptionOnLogin(id);
+    } catch (error) {
+      console.warn('Failed to check subscription on login:', error.message);
+      // Don't fail login if subscription check fails
+    }
+
     return {
       tokens,
+      subscription: subscriptionInfo,
     };
   }
 
@@ -207,6 +221,22 @@ export class AuthService {
       );
     }
 
-    return tokens;
+    // Step 6: Check user subscription on login
+    let subscriptionInfo: any = null;
+    try {
+      subscriptionInfo =
+        await this.subscriptionCheckService.checkUserSubscriptionOnLogin(id);
+    } catch (error) {
+      console.warn(
+        'Failed to check subscription on mobile login:',
+        error.message,
+      );
+      // Don't fail login if subscription check fails
+    }
+
+    return {
+      ...tokens,
+      subscription: subscriptionInfo,
+    } as any;
   }
 }

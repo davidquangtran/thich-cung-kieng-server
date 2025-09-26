@@ -22,6 +22,7 @@ import type { Request, Response } from 'express';
 import { Public } from 'src/common/decorators/public.decorator';
 import { GoogleAuthGuard } from './google/guards/google-auth.guard';
 import { GoogleLoginDto } from './google/dto/google-auth.dto';
+import { SubscriptionCheckService } from './services/subscription-check.service';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -29,7 +30,8 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
-  ) { }
+    private readonly subscriptionCheckService: SubscriptionCheckService,
+  ) {}
 
   @Public()
   @Get('google')
@@ -129,7 +131,8 @@ export class AuthController {
     });
     res.setHeader(
       'Access-Control-Allow-Origin',
-      this.configService.get<string>('server.clientUrl') || 'http://localhost:3000',
+      this.configService.get<string>('server.clientUrl') ||
+        'http://localhost:3000',
     );
     res.setHeader('Access-Control-Allow-Credentials', 'true');
 
@@ -232,5 +235,46 @@ export class AuthController {
     res.json({
       accessToken: tokens.accessToken,
     });
+  }
+
+  @Get('subscription-status')
+  @ApiOperation({
+    summary: 'Check user subscription status',
+    description: 'Get current user subscription status and details',
+  })
+  @ApiOkResponse({
+    description: 'Subscription status retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        hasActiveSubscription: { type: 'boolean', example: true },
+        subscriptionStatus: { type: 'string', example: 'active' },
+        subscriptionDetails: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', example: 'subscription-id' },
+            startDate: { type: 'string', example: '2024-01-01T00:00:00Z' },
+            endDate: { type: 'string', example: '2024-02-01T00:00:00Z' },
+            daysRemaining: { type: 'number', example: 15 },
+            plan: {
+              type: 'object',
+              properties: {
+                name: { type: 'string', example: 'Premium Plan' },
+                price: { type: 'number', example: 50000 },
+              },
+            },
+          },
+        },
+        message: { type: 'string', example: 'Active subscription found' },
+      },
+    },
+  })
+  async getSubscriptionStatus(@Req() req: any) {
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new BadRequestException('User not authenticated');
+    }
+
+    return this.subscriptionCheckService.getUserSubscriptionSummary(userId);
   }
 }

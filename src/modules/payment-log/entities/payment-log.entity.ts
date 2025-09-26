@@ -11,7 +11,7 @@ export class PaymentLog extends AbstractEntity {
     enum: PaymentStatus,
     default: PaymentStatus.PENDING,
   })
-  oldStatus: PaymentStatus.PENDING;
+  oldStatus: PaymentStatus;
 
   @Column({
     name: 'new_status',
@@ -19,7 +19,7 @@ export class PaymentLog extends AbstractEntity {
     enum: PaymentStatus,
     default: PaymentStatus.COMPLETED,
   })
-  newStatus: PaymentStatus.COMPLETED;
+  newStatus: PaymentStatus;
 
   @Column()
   description: string;

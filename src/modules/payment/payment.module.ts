@@ -9,5 +9,6 @@ import { RedisModule } from 'src/shared/redis/redis.module';
   imports: [TypeOrmModule.forFeature([Payment], 'postgresql'), RedisModule],
   controllers: [PaymentController],
   providers: [PaymentService],
+  exports: [PaymentService],
 })
 export class PaymentModule {}

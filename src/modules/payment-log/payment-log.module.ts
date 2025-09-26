@@ -9,5 +9,6 @@ import { PaymentLog } from './entities/payment-log.entity';
   imports: [TypeOrmModule.forFeature([PaymentLog], 'postgresql'), RedisModule],
   controllers: [PaymentLogController],
   providers: [PaymentLogService],
+  exports: [PaymentLogService],
 })
 export class PaymentLogModule {}

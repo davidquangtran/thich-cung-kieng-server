@@ -35,6 +35,7 @@ import { RitualCategoryModule } from './modules/ritual-category/ritual-category.
 import { UserFavoriteRitualModule } from './modules/user-favorite-ritual/user-favorite-ritual.module';
 import { RequestContextInterceptor } from './common/interceptors/request-context.interceptor';
 import { OfferingRitualModule } from './modules/ritual-offering/ritual-offering.module';
+import { PayosModule } from './shared/payos/payos.module';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { OfferingRitualModule } from './modules/ritual-offering/ritual-offering.
     UserEventReminderModule,
     UserSubscriptionModule,
     UserFavoriteRitualModule,
+    PayosModule,
   ],
   controllers: [],
   providers: [

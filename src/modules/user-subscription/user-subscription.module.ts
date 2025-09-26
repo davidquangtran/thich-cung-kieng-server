@@ -12,5 +12,6 @@ import { RedisModule } from 'src/shared/redis/redis.module';
   ],
   controllers: [UserSubscriptionController],
   providers: [UserSubscriptionService],
+  exports: [UserSubscriptionService],
 })
 export class UserSubscriptionModule {}
