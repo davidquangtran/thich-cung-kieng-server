@@ -32,10 +32,10 @@ export class PayosIntegrationService {
   /**
    * Generate unique order code
    */
-  private generateOrderCode(prefix: string): string {
-    const timestamp = Date.now();
+  private generateOrderCode(): number {
+    const timestamp = Date.now(); // milliseconds since epoch
     const random = Math.floor(Math.random() * 1000);
-    return `${prefix}_${timestamp}_${random}`;
+    return timestamp + random;
   }
 
   /**
@@ -60,7 +60,7 @@ export class PayosIntegrationService {
     options: {
       returnUrl?: string;
       cancelUrl?: string;
-    } = {},
+    },
   ) {
     try {
       // Get plan and user data from real services
@@ -77,7 +77,7 @@ export class PayosIntegrationService {
         throw new NotFoundException(`User with ID ${userId} not found`);
       }
 
-      const orderCode = this.generateOrderCode('SUB');
+      const orderCode = this.generateOrderCode();
       const urls =
         options.returnUrl && options.cancelUrl
           ? { returnUrl: options.returnUrl, cancelUrl: options.cancelUrl }
@@ -179,9 +179,9 @@ export class PayosIntegrationService {
       }
 
       // Determine payment type from order code
-      const orderCode = data.orderCode.toString();
+      const orderCode = data.orderCode;
 
-      if (orderCode.includes('SUB_')) {
+      if (orderCode) {
         await this.handleSubscriptionPayment(data);
       } else {
         this.logger.warn(`Unknown payment type for order: ${orderCode}`);
@@ -290,7 +290,7 @@ export class PayosIntegrationService {
 
         // Simulate webhook data for manual status updates
         const webhookData = {
-          orderCode: parseInt(orderCode.split('_')[1]) || orderCode,
+          orderCode: orderCode,
           amount: paymentInfo.amount,
           description: paymentInfo.description,
           accountNumber: paymentInfo.accountNumber || '',
@@ -472,16 +472,16 @@ export class PayosIntegrationService {
 
       // Update payment status
       const updatedPayment = await this.paymentService.update(paymentId, {
-        status: PaymentStatus.CANCELLED as any,
+        status: PaymentStatus.CANCELLED,
       });
 
       // Log the cancellation
       await this.paymentLogService.create({
         paymentId,
-        oldStatus: PaymentStatus.PENDING as any,
-        newStatus: PaymentStatus.CANCELLED as any,
+        oldStatus: PaymentStatus.PENDING,
+        newStatus: PaymentStatus.CANCELLED,
         description: reason || 'Payment cancelled by user',
-      } as any);
+      });
 
       return updatedPayment;
     } catch (error) {

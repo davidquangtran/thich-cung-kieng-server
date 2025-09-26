@@ -42,6 +42,11 @@ export class SubscriptionFeatureController {
     return await this.subscriptionFeatureService.findOne(id);
   }
 
+  @Get('select')
+  async select() {
+    return await this.subscriptionFeatureService.selectOptions();
+  }
+
   @Patch(':id')
   async update(
     @Param('id') id: string,

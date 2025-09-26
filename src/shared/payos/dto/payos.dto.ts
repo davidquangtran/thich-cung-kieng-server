@@ -8,6 +8,8 @@ import {
   Min,
   IsEmail,
   IsUrl,
+  Max,
+  Length,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -30,17 +32,19 @@ export class PaymentItemDto {
 }
 
 export class CreatePaymentDto {
-  @ApiProperty({ description: 'Order code', example: 'ORDER_123456' })
+  @ApiProperty({ description: 'Order code', example: 123456 })
   @IsNotEmpty()
-  orderCode: string | number;
+  orderCode: number;
 
   @ApiProperty({ description: 'Payment amount', example: 100000 })
   @IsNumber()
   @Min(1000) // Minimum 1,000 VND
+  @Max(100000000000) // Maximum 100,000,000,000 VND
   amount: number;
 
   @ApiProperty({ description: 'Payment description' })
   @IsNotEmpty()
+  @Length(1, 25)
   @IsString()
   description: string;
 
@@ -186,7 +190,7 @@ export class PaymentWebhookDto {
 export class CancelPaymentDto {
   @ApiProperty({ description: 'Order code to cancel' })
   @IsNotEmpty()
-  orderCode: string | number;
+  orderCode: number;
 
   @ApiPropertyOptional({ description: 'Cancellation reason' })
   @IsOptional()
@@ -198,7 +202,7 @@ export class BatchCancelPaymentDto {
   @ApiProperty({ description: 'Array of order codes to cancel' })
   @IsArray()
   @IsNotEmpty({ each: true })
-  orderCodes: (string | number)[];
+  orderCodes: number[];
 
   @ApiPropertyOptional({ description: 'Cancellation reason' })
   @IsOptional()
@@ -210,7 +214,7 @@ export class BatchCheckStatusDto {
   @ApiProperty({ description: 'Array of order codes to check' })
   @IsArray()
   @IsNotEmpty({ each: true })
-  orderCodes: (string | number)[];
+  orderCodes: number[];
 }
 
 export class ConfirmWebhookDto {

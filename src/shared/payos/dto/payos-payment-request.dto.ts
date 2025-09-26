@@ -1,7 +1,7 @@
 import { PayOSItem } from '../interfaces/Payos-item.interface';
 
 export interface CreatePaymentRequest {
-  orderCode: string | number;
+  orderCode: number | string;
   amount: number;
   description: string;
   returnUrl: string;

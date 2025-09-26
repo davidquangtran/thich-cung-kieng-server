@@ -56,6 +56,11 @@ export class OfferingController {
     return this.offeringService.findOne(id);
   }
 
+  @Get('select')
+  select() {
+    return this.offeringService.selectOptions();
+  }
+
   @Put(':id/with-relations')
   @ApiOperation({ summary: 'Update an offering with relations' })
   @ApiBody({ type: UpdateOfferingWithRelationsDto })

@@ -51,6 +51,11 @@ export class RitualController {
     return this.ritualService.findOne(id);
   }
 
+  @Get('select')
+  select() {
+    return this.ritualService.selectOptions();
+  }
+
   @Put(':id')
   @ApiOperation({ summary: 'Update a ritual' })
   @ApiBody({ type: UpdateRitualWithRelationsDto })

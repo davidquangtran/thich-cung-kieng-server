@@ -34,6 +34,11 @@ export class RitualCategoryController {
     return this.ritualCategoryService.findOne(id);
   }
 
+  @Get('select')
+  select() {
+    return this.ritualCategoryService.selectOptions();
+  }
+
   @Patch(':id')
   update(
     @Param('id') id: string,
