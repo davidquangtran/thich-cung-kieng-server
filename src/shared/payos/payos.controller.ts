@@ -4,6 +4,7 @@ import {
   Get,
   Body,
   Param,
+  Headers,
   HttpStatus,
   Logger,
   UseGuards,
@@ -18,11 +19,11 @@ import {
 import { PayosService } from './payos.service';
 import {
   CreateSubscriptionPaymentDto,
-  PaymentWebhookDto,
 } from './dto/payos.dto';
 import { GlobalAuthGuard } from '../../common/guards/global-auth.guard';
 import { Public } from '../../common/decorators/public.decorator';
 import { PayosIntegrationService } from './payos-integration.service';
+import type { Webhook, WebhookData } from '@payos/node';
 
 @ApiTags('PayOS - Subscription Payment')
 @Controller('payos')
@@ -55,11 +56,7 @@ export class PayosController {
           },
         );
 
-      return {
-        success: true,
-        message: 'Tạo thanh toán gói đăng ký thành công',
-        data: result,
-      };
+      return result;
     } catch (error) {
       this.logger.error(
         `Failed to create subscription payment: ${error.message}`,
@@ -77,18 +74,14 @@ export class PayosController {
     status: HttpStatus.OK,
     description: 'Kiểm tra trạng thái thành công',
   })
-  async checkSubscriptionPaymentStatus(@Param('orderCode') orderCode: string) {
+  async checkSubscriptionPaymentStatus(@Param('orderCode') orderCode: number) {
     try {
       const result =
         await this.payosIntegrationService.checkAndUpdatePaymentStatus(
           orderCode,
         );
 
-      return {
-        success: true,
-        message: 'Kiểm tra trạng thái thanh toán thành công',
-        data: result,
-      };
+      return result;
     } catch (error) {
       this.logger.error(
         `Failed to check subscription payment status: ${error.message}`,
@@ -104,26 +97,81 @@ export class PayosController {
     status: HttpStatus.OK,
     description: 'Webhook processed successfully',
   })
-  async handleWebhook(@Body() webhookData: PaymentWebhookDto) {
+  async handleWebhook(
+    @Body() webhookData: any,
+    @Headers() headers: any
+  ) {
     try {
-      this.logger.log(`Received webhook for order: ${webhookData.orderCode}`);
+      // Log webhook data for debugging
+      this.logger.debug('Webhook received:', {
+        data: webhookData,
+        hasData: !!webhookData,
+        userAgent: headers['user-agent'],
+      });
 
-      const result = await this.payosService.handleWebhook(webhookData);
+      // Check if this is a test request (empty body from Swagger/Postman)
+      if (!webhookData || Object.keys(webhookData).length === 0) {
+        this.logger.warn('Empty webhook data received - likely a test request');
+        return {
+          success: true,
+          message: 'Webhook endpoint is working. Awaiting real PayOS webhook data.',
+          note: 'This appears to be a test request. Real PayOS webhooks will contain payment data.',
+        };
+      }
 
-      if (!result.isValid) {
+      // PayOS webhook has nested structure - extract the actual data
+      const actualData = webhookData.data || webhookData;
+      const orderCode = actualData.orderCode || webhookData.orderCode;
+      const paymentCode = actualData.code || webhookData.code;
+
+      // Validate required PayOS webhook fields
+      if (!orderCode && !paymentCode) {
+        this.logger.error('Invalid PayOS webhook format - missing required fields');
+        return {
+          success: false,
+          message: 'Invalid webhook format - missing required PayOS fields',
+        };
+      }
+
+      // Extract signature from headers or webhook body
+      const signature = headers['x-payos-signature'] || 
+                       headers['payos-signature'] || 
+                       headers['signature'] ||
+                       webhookData.signature;
+
+      // For development, log the webhook structure
+      this.logger.debug('PayOS webhook fields:', {
+        orderCode: orderCode,
+        code: paymentCode,
+        amount: actualData.amount,
+        hasSignature: !!signature,
+        webhookStructure: {
+          hasTopLevelData: !!webhookData.data,
+          topLevelFields: Object.keys(webhookData),
+          nestedFields: webhookData.data ? Object.keys(webhookData.data) : []
+        }
+      });
+
+      // Verify webhook first
+      const isValid = await this.payosService.verifyWebhook(webhookData, signature);
+      
+      if (!isValid) {
+        this.logger.warn('Invalid webhook signature received');
         return {
           success: false,
           message: 'Invalid webhook signature',
         };
       }
 
-      // Here you can add your business logic for handling successful payments
-      // For example: update subscription status, send confirmation emails, etc.
+      // Process webhook through integration service
+      // Pass the actual payment data (nested structure)
+      const actualPaymentData = webhookData.data || webhookData;
+      const result = await this.payosIntegrationService.handlePaymentWebhook(actualPaymentData);
 
       return {
         success: true,
         message: 'Webhook processed successfully',
-        data: result.data,
+        data: result,
       };
     } catch (error) {
       this.logger.error(`Failed to process webhook: ${error.message}`);
@@ -151,11 +199,7 @@ export class PayosController {
           paymentId,
         );
 
-      return {
-        success: true,
-        message: 'Lấy chi tiết thanh toán thành công',
-        data: result,
-      };
+      return result;
     } catch (error) {
       this.logger.error(
         `Failed to get subscription payment details: ${error.message}`,
@@ -178,11 +222,7 @@ export class PayosController {
       const result =
         await this.payosIntegrationService.getUserSubscriptionPayments(userId);
 
-      return {
-        success: true,
-        message: 'Lấy danh sách thanh toán thành công',
-        data: result,
-      };
+      return result;
     } catch (error) {
       this.logger.error(
         `Failed to get user subscription payments: ${error.message}`,
@@ -211,11 +251,7 @@ export class PayosController {
           body.reason,
         );
 
-      return {
-        success: true,
-        message: 'Hủy thanh toán thành công',
-        data: result,
-      };
+      return result;
     } catch (error) {
       this.logger.error(
         `Failed to cancel subscription payment: ${error.message}`,
@@ -238,14 +274,59 @@ export class PayosController {
       const result =
         await this.payosIntegrationService.getUserPaymentStats(userId);
 
-      return {
-        success: true,
-        message: 'Lấy thống kê thanh toán thành công',
-        data: result,
-      };
+      return result;
     } catch (error) {
       this.logger.error(`Failed to get user payment stats: ${error.message}`);
       throw error;
     }
+  }
+
+  @Get('webhook/test-format')
+  @Public()
+  @ApiOperation({ 
+    summary: 'Xem format webhook PayOS mẫu',
+    description: 'Endpoint để xem cấu trúc webhook mà PayOS sẽ gửi đến server'
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Trả về format webhook PayOS mẫu',
+  })
+  getWebhookTestFormat() {
+    return {
+      success: true,
+      message: 'PayOS Webhook Format Example',
+      data: {
+        webhookUrl: 'POST /api/v1/payos/webhook',
+        samplePayload: {
+          code: '00',
+          desc: 'success',
+          success: true,
+          data: {
+            orderCode: 1234567890,
+            amount: 299000,
+            description: 'Goi Premium',
+            accountNumber: '970422***',
+            reference: 'FT22348123456',
+            transactionDateTime: '2025-09-28T10:30:00Z',
+            currency: 'VND',
+            paymentLinkId: 'abc123def456',
+            code: '00', // "00" = success, other = failed
+            desc: 'success',
+            counterAccountBankId: '',
+            counterAccountBankName: '',
+            counterAccountName: '',
+            counterAccountNumber: '',
+            virtualAccountName: '',
+            virtualAccountNumber: ''
+          },
+          signature: 'webhook_signature_here'
+        },
+        headers: {
+          'x-payos-signature': 'sha256=signature_here',
+          'content-type': 'application/json'
+        },
+        note: 'PayOS sẽ gửi webhook này khi thanh toán hoàn tất'
+      }
+    };
   }
 }

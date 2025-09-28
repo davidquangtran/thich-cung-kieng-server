@@ -46,7 +46,9 @@ This API powers various features and functionalities of the Thich Cung Kieng app
   // Require BOTH headers when the guard is applied. In OpenAPI, putting both
   // schemes inside one security object means they are required together (AND).
   (document as any).security = [{ ApiKeyAuth: [], ApiSecretAuth: [] }];
-  SwaggerModule.setup('docs', app, document);
+  SwaggerModule.setup('docs', app, document, {
+    jsonDocumentUrl: 'docs-json',
+  });
   await app.listen(configService.get<string>('server.port') || 3000);
 }
 bootstrap();

@@ -105,14 +105,13 @@ export class PayosIntegrationService {
         currency: 'VND',
         provider: PaymentProvider.PAYOS,
         transactionCode: orderCode.toString(),
-        status: PaymentStatus.INITIATED,
+        status: PaymentStatus.PENDING,
       });
 
       // Create initial payment log
       await this.paymentLogService.create({
         paymentId: payment.id,
-        oldStatus: PaymentStatus.PENDING,
-        newStatus: PaymentStatus.INITIATED,
+        status: PaymentStatus.PENDING,
         description: `Payment initiated for subscription plan: ${plan.name}`,
       });
 
@@ -230,8 +229,7 @@ export class PayosIntegrationService {
         // Create payment log for completion
         await this.paymentLogService.create({
           paymentId: payment.id,
-          oldStatus: PaymentStatus.INITIATED as any,
-          newStatus: PaymentStatus.COMPLETED as any,
+          status: PaymentStatus.COMPLETED,
           description: `Payment completed successfully via PayOS. Reference: ${webhookData.reference}`,
         });
 
@@ -259,8 +257,7 @@ export class PayosIntegrationService {
         // Create payment log for failure
         await this.paymentLogService.create({
           paymentId: payment.id,
-          oldStatus: PaymentStatus.INITIATED as any,
-          newStatus: PaymentStatus.FAILED as any,
+          status: PaymentStatus.FAILED,
           description: `Payment failed: ${webhookData.desc}`,
         });
 
@@ -280,7 +277,7 @@ export class PayosIntegrationService {
   /**
    * Check payment status and update business logic
    */
-  async checkAndUpdatePaymentStatus(orderCode: string) {
+  async checkAndUpdatePaymentStatus(orderCode: number) {
     try {
       const status = await this.payosService.checkPaymentStatus(orderCode);
 
@@ -374,8 +371,7 @@ export class PayosIntegrationService {
         paymentLogs:
           payment.paymentLogs?.map((log) => ({
             id: log.id,
-            oldStatus: log.oldStatus,
-            newStatus: log.newStatus,
+            status: log.status,
             description: log.description,
             createdAt: log.createdAt,
           })) || [],
@@ -458,7 +454,7 @@ export class PayosIntegrationService {
       // Try to cancel with PayOS if possible
       try {
         if (payment.transactionCode) {
-          await this.payosService.cancelLink(
+          await this.payosService.cancelPaymentLink(
             parseInt(payment.transactionCode),
             reason,
           );
@@ -478,8 +474,7 @@ export class PayosIntegrationService {
       // Log the cancellation
       await this.paymentLogService.create({
         paymentId,
-        oldStatus: PaymentStatus.PENDING,
-        newStatus: PaymentStatus.CANCELLED,
+        status: PaymentStatus.CANCELLED,
         description: reason || 'Payment cancelled by user',
       });
 
@@ -498,7 +493,7 @@ export class PayosIntegrationService {
   async getUserPaymentStats(userId: string) {
     try {
       const payments = await this.paymentService.findAll(
-        { page: 1, limit: 100 },
+        {},
         [],
         [],
       );
@@ -529,10 +524,10 @@ export class PayosIntegrationService {
           .reduce((sum, p) => sum + p.totalAmount, 0),
         lastPaymentDate:
           userPayments.length > 0
-            ? Math.max(
-                ...userPayments.map((p) => new Date(p.createdAt).getTime()),
-              )
-            : null,
+        ? userPayments
+            .map((p) => new Date(p.createdAt))
+            .sort((a, b) => b.getTime() - a.getTime())[0].toISOString()
+        : null,
       };
 
       return stats;

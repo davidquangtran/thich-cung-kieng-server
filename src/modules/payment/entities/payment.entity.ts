@@ -40,7 +40,7 @@ export class Payment extends AbstractEntity {
   @Column({
     type: 'enum',
     enum: PaymentStatus,
-    default: PaymentStatus.INITIATED,
+    default: PaymentStatus.PENDING,
   })
   status: PaymentStatus;
 

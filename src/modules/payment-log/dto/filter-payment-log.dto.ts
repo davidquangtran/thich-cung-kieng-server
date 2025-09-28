@@ -5,20 +5,12 @@ import { PaymentStatus } from 'src/common/enums/payment.enum';
 
 export class FilterPaymentLogDto extends PartialType(BaseFilterDto) {
   @ApiPropertyOptional({
-    description: 'Old status of the payment log',
+    description: 'Status of the payment log',
     example: PaymentStatus.PENDING,
   })
   @IsOptional()
   @IsEnum(PaymentStatus)
-  oldStatus?: PaymentStatus;
-
-  @ApiPropertyOptional({
-    description: 'New status of the payment log',
-    example: PaymentStatus.COMPLETED,
-  })
-  @IsOptional()
-  @IsEnum(PaymentStatus)
-  newStatus?: PaymentStatus;
+  status?: PaymentStatus;
 
   @ApiPropertyOptional({
     description: 'ID of the associated payment',

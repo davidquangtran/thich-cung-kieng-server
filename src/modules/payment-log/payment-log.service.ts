@@ -39,15 +39,9 @@ export class PaymentLogService extends BaseService<PaymentLog> {
     queryBuilder.andWhere(`${aliasName}.deletedAt IS NULL`);
 
     // Apply filters if provided
-    if (filter.oldStatus) {
-      queryBuilder.andWhere(`${aliasName}.oldStatus = :oldStatus`, {
-        oldStatus: filter.oldStatus,
-      });
-    }
-
-    if (filter.newStatus) {
-      queryBuilder.andWhere(`${aliasName}.newStatus = :newStatus`, {
-        newStatus: filter.newStatus,
+    if (filter.status) {
+      queryBuilder.andWhere(`${aliasName}.status = :status`, {
+        status: filter.status,
       });
     }
 

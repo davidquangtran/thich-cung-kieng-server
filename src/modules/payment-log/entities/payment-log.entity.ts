@@ -6,20 +6,12 @@ import { Column, Entity, ManyToOne } from 'typeorm';
 @Entity({ name: 'payment_logs' })
 export class PaymentLog extends AbstractEntity {
   @Column({
-    name: 'old_status',
+    name: 'status',
     type: 'enum',
     enum: PaymentStatus,
     default: PaymentStatus.PENDING,
   })
-  oldStatus: PaymentStatus;
-
-  @Column({
-    name: 'new_status',
-    type: 'enum',
-    enum: PaymentStatus,
-    default: PaymentStatus.COMPLETED,
-  })
-  newStatus: PaymentStatus;
+  status: PaymentStatus;
 
   @Column()
   description: string;
