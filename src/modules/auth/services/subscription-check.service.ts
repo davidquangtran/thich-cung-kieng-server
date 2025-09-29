@@ -19,112 +19,88 @@ export class SubscriptionCheckService {
     try {
       this.logger.log(`Checking subscription for user: ${userId}`);
 
-      // Get user's subscriptions with relations
-      const subscriptions = await this.userSubscriptionService.findAll(
-        { page: 1, limit: 10 },
-        ['subscriptionPlan', 'payment'],
-        [],
+      // Get user's subscriptions directly by userId
+      const userSubscriptions = await this.userSubscriptionService.findOne(
+        userId,
+        [
+          'subscriptionPlan',
+          'subscriptionPlan.planFeatures',
+          'subscriptionPlan.planFeatures.subscriptionFeature',
+        ],
       );
-
-      // Filter subscriptions for this user
-      const userSubscriptions =
-        subscriptions?.data?.filter((sub) => sub.userId === userId) || [];
-
-      if (userSubscriptions.length === 0) {
-        this.logger.log(`No subscriptions found for user: ${userId}`);
+      if (!userSubscriptions) {
+        this.logger.log(
+          `No subscriptions found for user: ${userId}, returning basic subscription`,
+        );
         return {
           hasActiveSubscription: false,
-          subscriptionStatus: null,
-          subscriptionDetails: null,
-          message: 'No subscriptions found',
+          subscriptionStatus: 'BASIC',
+          subscriptionDetails: {
+            type: 'basic',
+            features: 'ACCESS_BASIC_RITUALS',
+          },
+          message: 'Basic subscription - no paid plans found',
         };
       }
 
       // Check for active subscriptions
-      const activeSubscriptions = userSubscriptions.filter(
-        (sub) => sub.status === UserSubscriptionStatus.ACTIVE,
-      );
+      if (userSubscriptions.status === UserSubscriptionStatus.ACTIVE) {
+        // Check for expired subscriptions that need to be updated
+        const now = new Date();
+        if (userSubscriptions.endDate < now) {
+          this.logger.log(
+            `Updating expired subscription: ${userSubscriptions.id}`,
+          );
+          await this.userSubscriptionService.update(userSubscriptions.id, {
+            status: UserSubscriptionStatus.EXPIRED,
+          });
+          return {
+            hasActiveSubscription: false,
+            subscriptionStatus: UserSubscriptionStatus.EXPIRED,
+            subscriptionDetails: null,
+            message: 'No active subscription found',
+          };
+        }
 
-      // Check for expired subscriptions that need to be updated
-      const now = new Date();
-      const expiredActiveSubscriptions = activeSubscriptions.filter(
-        (sub) => new Date(sub.endDate) < now,
-      );
-
-      // Update expired subscriptions
-      for (const expiredSub of expiredActiveSubscriptions) {
-        this.logger.log(`Updating expired subscription: ${expiredSub.id}`);
-        await this.userSubscriptionService.update(expiredSub.id, {
-          status: UserSubscriptionStatus.EXPIRED as any,
-        });
-        expiredSub.status = UserSubscriptionStatus.EXPIRED;
+        if (userSubscriptions.endDate >= now) {
+          this.logger.log(
+            `Subscription is still active: ${userSubscriptions.id}`,
+          );
+          return {
+            hasActiveSubscription: true,
+            subscriptionStatus: UserSubscriptionStatus.ACTIVE,
+            subscriptionDetails: {
+              id: userSubscriptions.id,
+              startDate: userSubscriptions.startDate,
+              endDate: userSubscriptions.endDate,
+              plan: userSubscriptions.subscriptionPlan
+                ? {
+                    name: userSubscriptions.subscriptionPlan.name,
+                    price: userSubscriptions.subscriptionPlan.price,
+                  }
+                : null,
+              daysRemaining: Math.ceil(
+                (userSubscriptions.endDate.getTime() - now.getTime()) /
+                  (1000 * 60 * 60 * 24),
+              ),
+            },
+            message: 'Active subscription found',
+          };
+        }
       }
 
-      // Get currently active subscriptions (not expired)
-      const currentlyActive = activeSubscriptions.filter(
-        (sub) => new Date(sub.endDate) >= now,
-      );
-
-      if (currentlyActive.length > 0) {
-        // Sort by end date to get the latest subscription
-        currentlyActive.sort(
-          (a, b) =>
-            new Date(b.endDate).getTime() - new Date(a.endDate).getTime(),
-        );
-
-        const latestSubscription = currentlyActive[0];
-
-        this.logger.log(
-          `Active subscription found for user ${userId}: ${latestSubscription.id}`,
-        );
-
-        return {
-          hasActiveSubscription: true,
-          subscriptionStatus: UserSubscriptionStatus.ACTIVE,
-          subscriptionDetails: {
-            id: latestSubscription.id,
-            startDate: latestSubscription.startDate,
-            endDate: latestSubscription.endDate,
-            autoRenew: latestSubscription.autoRenew,
-            plan: latestSubscription.subscriptionPlan
-              ? {
-                  id: latestSubscription.subscriptionPlan.id,
-                  name: latestSubscription.subscriptionPlan.name,
-                  price: latestSubscription.subscriptionPlan.price,
-                  durationDays:
-                    latestSubscription.subscriptionPlan.durationDays,
-                }
-              : null,
-            daysRemaining: Math.ceil(
-              (new Date(latestSubscription.endDate).getTime() - now.getTime()) /
-                (1000 * 60 * 60 * 24),
-            ),
-          },
-          message: 'Active subscription found',
-        };
-      }
-
-      // Check if user has any pending subscriptions
-      const pendingSubscriptions = userSubscriptions.filter(
-        (sub) => sub.status === UserSubscriptionStatus.PENDING,
-      );
-
-      if (pendingSubscriptions.length > 0) {
-        const latestPending = pendingSubscriptions.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        )[0];
-
+      if (userSubscriptions.status === UserSubscriptionStatus.PENDING) {
+        // Check if user has any pending subscriptions
         return {
           hasActiveSubscription: false,
           subscriptionStatus: UserSubscriptionStatus.PENDING,
           subscriptionDetails: {
-            id: latestPending.id,
-            status: latestPending.status,
-            plan: latestPending.subscriptionPlan
+            id: userSubscriptions.id,
+            status: userSubscriptions.status,
+            plan: userSubscriptions.subscriptionPlan
               ? {
-                  name: latestPending.subscriptionPlan.name,
-                  price: latestPending.subscriptionPlan.price,
+                  name: userSubscriptions.subscriptionPlan.name,
+                  price: userSubscriptions.subscriptionPlan.price,
                 }
               : null,
           },

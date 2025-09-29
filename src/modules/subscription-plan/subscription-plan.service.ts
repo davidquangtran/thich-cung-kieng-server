@@ -25,7 +25,11 @@ export class SubscriptionPlanService extends BaseService<SubscriptionPlan> {
   }
 
   protected getDefaultRelations(): string[] {
-    return ['userSubscriptions', 'planFeatures'];
+    return [
+      'userSubscriptions',
+      'planFeatures',
+      'planFeatures.subscriptionFeature',
+    ];
   }
 
   protected getSearchableFields(): string[] {

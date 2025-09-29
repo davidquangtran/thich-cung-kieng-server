@@ -29,14 +29,14 @@ export class TagController {
     return this.tagService.findAll(filter, [], []);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.tagService.findOne(id);
-  }
-
   @Get('select')
   select() {
     return this.tagService.selectOptions();
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.tagService.findOne(id);
   }
 
   @Patch(':id')

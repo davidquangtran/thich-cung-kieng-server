@@ -5,7 +5,6 @@ import {
   FindOptionsWhere,
   Repository,
 } from 'typeorm';
-import { CACHE_FIELD_DETAIL } from '../../constants/cache.constant';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AbstractEntity } from '../entity.base';
 import { QueryServiceBase } from './query-service.base';
@@ -187,9 +186,6 @@ export abstract class BaseService<
       if (!id) throw new Error('ID to delete is required');
       const entity = await this.findOne(id);
       if (!entity) return false;
-      await this.redis.del(
-        this.getCacheKey({ identifier: id, field: CACHE_FIELD_DETAIL }),
-      );
       await this.repository.delete(id);
       return true;
     } catch (error) {
@@ -220,10 +216,6 @@ export abstract class BaseService<
       if (!entity) return;
       this.logger.log(`Removing ${this.getEntityName()} with id ${id}`);
       this.logger.log(`entity: ${JSON.stringify(entity)}`);
-      await this.redis.del(
-        this.getCacheKey({ identifier: id, field: CACHE_FIELD_DETAIL }),
-      );
-
       await repository.remove(entity);
     } catch (error) {
       this.logger.error(
@@ -238,9 +230,6 @@ export abstract class BaseService<
       if (!id) throw new Error('ID to soft remove is required');
       const entity = await this.findOne(id);
       if (!entity) return;
-      await this.redis.del(
-        this.getCacheKey({ identifier: id, field: CACHE_FIELD_DETAIL }),
-      );
       await this.repository.softRemove(entity);
     } catch (error) {
       this.logger.error(

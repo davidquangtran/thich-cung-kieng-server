@@ -43,12 +43,16 @@ export class RitualController {
 
   @Get()
   findAll(@Query() filter: FilterRitualDto) {
-    return this.ritualService.findAll(filter, [], []);
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.ritualService.findOne(id);
+    // Load minimal relations for list view
+    return this.ritualService.findAll(
+      filter,
+      [
+        'ritualMedias', // For display image
+        'ritualTags',
+        'ritualTags.tag',
+      ],
+      [],
+    );
   }
 
   @Get('select')
@@ -56,14 +60,35 @@ export class RitualController {
     return this.ritualService.selectOptions();
   }
 
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    // Load essential relations for detail view
+    return this.ritualService.findOne(id, [
+      'ritualMedias',
+      'ritualTags',
+      'ritualTags.tag',
+      'ritualOfferings',
+      'ritualOfferings.offering',
+      'prayers',
+      'ritualReviews',
+    ]);
+  }
+
   @Put(':id')
   @ApiOperation({ summary: 'Update a ritual' })
   @ApiBody({ type: UpdateRitualWithRelationsDto })
   @ApiResponse({ status: 200, description: 'Ritual updated successfully' })
-  async update(@Param('id') id: string, @Body() body: UpdateRitualWithRelationsDto) {
+  async update(
+    @Param('id') id: string,
+    @Body() body: UpdateRitualWithRelationsDto,
+  ) {
     const { ritual, relations } = body;
     if (relations && Object.keys(relations).length > 0) {
-      return await this.ritualService.updateWithRelations(id, ritual, relations);
+      return await this.ritualService.updateWithRelations(
+        id,
+        ritual,
+        relations,
+      );
     } else {
       return await this.ritualService.update(id, ritual);
     }

@@ -30,6 +30,7 @@ export class UserEventReminder extends AbstractEntity {
   status: UserEventReminderStatus;
 
   @ManyToOne(() => UserEvent, (userEvent) => userEvent.reminders)
+  @JoinColumn({ name: 'user_event_id' })
   userEvent: UserEvent;
   constructor(partial: Partial<UserEventReminder>) {
     super();

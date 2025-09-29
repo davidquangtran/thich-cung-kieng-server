@@ -42,5 +42,6 @@ export class CreateSubscriptionPlanDto {
   })
   @IsInt()
   @IsPositive()
+  @IsNumber()
   durationDays: number;
 }

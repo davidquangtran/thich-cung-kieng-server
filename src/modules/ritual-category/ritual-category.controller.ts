@@ -29,14 +29,14 @@ export class RitualCategoryController {
     return this.ritualCategoryService.findAll(filter, [], []);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.ritualCategoryService.findOne(id);
-  }
-
   @Get('select')
   select() {
     return this.ritualCategoryService.selectOptions();
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.ritualCategoryService.findOne(id);
   }
 
   @Patch(':id')

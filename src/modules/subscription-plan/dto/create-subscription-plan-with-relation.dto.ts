@@ -1,5 +1,3 @@
-import { SubscriptionPlan } from 'src/modules/subscription-plan/entities/subscription-plan.entity';
-import { SubscriptionFeature } from 'src/modules/subscription-feature/entities/subscription-feature.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsUUID, ValidateNested } from 'class-validator';
 import { CreateSubscriptionPlanDto } from './create-subscription-plan.dto';

@@ -40,7 +40,11 @@ export class SubscriptionPlanController {
 
   @Get()
   findAll(@Query() filter: FilterSubscriptionPlanDto) {
-    return this.subscriptionPlanService.findAll(filter, [], []);
+    return this.subscriptionPlanService.findAll(
+      filter,
+      ['planFeatures', 'planFeatures.subscriptionFeature'],
+      [],
+    );
   }
 
   @Get(':id')

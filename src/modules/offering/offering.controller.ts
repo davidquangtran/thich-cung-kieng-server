@@ -23,15 +23,6 @@ import { UpdateOfferingWithRelationsDto } from './dto/update-offering-with-relat
 @Controller('offering')
 export class OfferingController {
   constructor(private readonly offeringService: OfferingService) {}
-
-  @Post()
-  @ApiOperation({ summary: 'Create a new offering' })
-  @ApiBody({ type: CreateOfferingDto })
-  @ApiResponse({ status: 201, description: 'Offering created successfully' })
-  async create(@Body() createOfferingDto: CreateOfferingDto) {
-    return this.offeringService.create(createOfferingDto);
-  }
-
   @Post('with-relations')
   @ApiOperation({ summary: 'Create a new offering' })
   @ApiBody({ type: CreateOfferingWithRelationsDto })
@@ -48,12 +39,7 @@ export class OfferingController {
 
   @Get()
   findAll(@Query() filter: FilterOfferingDto) {
-    return this.offeringService.findAll(filter, [], []);
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.offeringService.findOne(id);
+    return this.offeringService.findAll(filter, ['offeringMedias'], []);
   }
 
   @Get('select')
@@ -61,10 +47,18 @@ export class OfferingController {
     return this.offeringService.selectOptions();
   }
 
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.offeringService.findOne(id, ['offeringMedias']);
+  }
+
   @Put(':id/with-relations')
   @ApiOperation({ summary: 'Update an offering with relations' })
   @ApiBody({ type: UpdateOfferingWithRelationsDto })
-  @ApiResponse({ status: 200, description: 'Offering updated successfully with relations' })
+  @ApiResponse({
+    status: 200,
+    description: 'Offering updated successfully with relations',
+  })
   async updateWithRelations(
     @Param('id') id: string,
     @Body() body: UpdateOfferingWithRelationsDto,
@@ -82,6 +76,6 @@ export class OfferingController {
   @ApiOperation({ summary: 'Delete an offering' })
   @ApiResponse({ status: 200, description: 'Offering deleted successfully' })
   remove(@Param('id') id: string) {
-    return this.offeringService.delete(id);
+    return this.offeringService.remove(id);
   }
 }

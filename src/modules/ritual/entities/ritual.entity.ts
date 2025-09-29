@@ -3,7 +3,7 @@ import { DifficultyLevel } from 'src/common/enums/ritual.enum';
 import { RitualMedia } from 'src/modules/ritual-media/entities/ritual-media.entity';
 import { RitualTag } from 'src/modules/ritual-tag/entities/ritual-tag.entity';
 import { Prayer } from 'src/modules/prayer/entities/prayer.entity';
-import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { RitualReview } from 'src/modules/ritual-review/entities/ritual-review.entity';
 import { RitualCategory } from 'src/modules/ritual-category/entities/ritual-category.entity';
 import { UserFavoriteRitual } from 'src/modules/user-favorite-ritual/entities/user-favorite-ritual.entity';
@@ -59,7 +59,7 @@ export class Ritual extends AbstractEntity {
   @OneToMany(() => RitualOffering, (ritualOffering) => ritualOffering.ritual, {
     cascade: true,
   })
-  offerings: RitualOffering[];
+  ritualOfferings: RitualOffering[];
 
   @OneToMany(() => Prayer, (prayer) => prayer.ritual, { cascade: true })
   prayers: Prayer[];

@@ -316,15 +316,12 @@ export class PayosIntegrationService {
   async getSubscriptionPaymentDetails(paymentId: string) {
     try {
       // Get payment with relations
-      const payment = await this.paymentService.findOneWithRelations(
-        paymentId,
-        [
-          'userSubscription',
-          'userSubscription.subscriptionPlan',
-          'user',
-          'paymentLogs',
-        ],
-      );
+      const payment = await this.paymentService.findOne(paymentId, [
+        'userSubscription',
+        'userSubscription.subscriptionPlan',
+        'user',
+        'paymentLogs',
+      ]);
 
       if (!payment) {
         throw new NotFoundException(`Payment with ID ${paymentId} not found`);
@@ -492,11 +489,7 @@ export class PayosIntegrationService {
    */
   async getUserPaymentStats(userId: string) {
     try {
-      const payments = await this.paymentService.findAll(
-        {},
-        [],
-        [],
-      );
+      const payments = await this.paymentService.findAll({}, [], []);
 
       const userPayments =
         payments?.data?.filter(
@@ -524,10 +517,11 @@ export class PayosIntegrationService {
           .reduce((sum, p) => sum + p.totalAmount, 0),
         lastPaymentDate:
           userPayments.length > 0
-        ? userPayments
-            .map((p) => new Date(p.createdAt))
-            .sort((a, b) => b.getTime() - a.getTime())[0].toISOString()
-        : null,
+            ? userPayments
+                .map((p) => new Date(p.createdAt))
+                .sort((a, b) => b.getTime() - a.getTime())[0]
+                .toISOString()
+            : null,
       };
 
       return stats;

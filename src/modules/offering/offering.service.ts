@@ -25,7 +25,7 @@ export class OfferingService extends BaseService<Offering> {
   }
 
   protected getDefaultRelations(): string[] {
-    return ['ritualOfferings', 'ritualOfferings.ritual'];
+    return ['offeringMedias'];
   }
 
   protected getSearchableFields(): string[] {

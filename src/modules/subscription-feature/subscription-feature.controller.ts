@@ -37,14 +37,14 @@ export class SubscriptionFeatureController {
     return await this.subscriptionFeatureService.findAll(filter, [], []);
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return await this.subscriptionFeatureService.findOne(id);
-  }
-
   @Get('select')
   async select() {
     return await this.subscriptionFeatureService.selectOptions();
+  }
+
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    return await this.subscriptionFeatureService.findOne(id);
   }
 
   @Patch(':id')

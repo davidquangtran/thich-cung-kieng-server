@@ -1,7 +1,7 @@
 import { AbstractEntity } from 'src/common/base/entity.base';
 import { Ritual } from 'src/modules/ritual/entities/ritual.entity';
 import { Tag } from 'src/modules/tag/entities/tag.entity';
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 @Entity({ name: 'ritual_tags' })
 export class RitualTag extends AbstractEntity {
@@ -12,9 +12,11 @@ export class RitualTag extends AbstractEntity {
   tagId: string;
 
   @ManyToOne(() => Ritual, (ritual) => ritual.ritualTags)
+  @JoinColumn({ name: 'ritual_id' })
   ritual: Ritual;
 
   @ManyToOne(() => Tag, (tag) => tag.ritualTags)
+  @JoinColumn({ name: 'tag_id' })
   tag: Tag;
 
   constructor(partial: Partial<RitualTag>) {

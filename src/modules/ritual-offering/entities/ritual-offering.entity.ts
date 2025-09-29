@@ -1,7 +1,7 @@
 import { AbstractEntity } from 'src/common/base/entity.base';
 import { Offering } from 'src/modules/offering/entities/offering.entity';
 import { Ritual } from 'src/modules/ritual/entities/ritual.entity';
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 @Entity({ name: 'ritual_offerings' })
 export class RitualOffering extends AbstractEntity {
@@ -15,9 +15,11 @@ export class RitualOffering extends AbstractEntity {
   quantity: number;
 
   @ManyToOne(() => Ritual, (ritual) => ritual.id)
+  @JoinColumn({ name: 'ritual_id' })
   ritual: Ritual;
 
   @ManyToOne(() => Offering, (offering) => offering.id)
+  @JoinColumn({ name: 'offering_id' })
   offering: Offering;
 
   constructor(partial: Partial<RitualOffering>) {

@@ -44,6 +44,6 @@ export class OfferingMediaController {
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.offeringMediaService.delete(id);
+    return this.offeringMediaService.remove(id);
   }
 }

@@ -1,16 +1,8 @@
 import { FindOptionsWhere, Repository, SelectQueryBuilder } from 'typeorm';
 import { AbstractEntity } from '../entity.base';
 import { RedisService } from 'src/shared/redis/redis.service';
-import { Logger } from '@nestjs/common';
-import {
-  CACHE_FIELD_DETAIL,
-  CACHE_FIELD_FIND_ALL_OPTIONS,
-  CACHE_FIELD_FIND_ONE_OPTIONS,
-  CACHE_FIELD_LIST_ALL_FILTER,
-  CACHE_FIELD_SELECT_OPTIONS,
-  CACHE_NAMESPACE,
-  TTL_SECONDS,
-} from 'src/common/constants/cache.constant';
+import { BadRequestException, Logger } from '@nestjs/common';
+import { CACHE_NAMESPACE } from 'src/common/constants/cache.constant';
 import { BuildCacheKeyOptions } from 'src/common/interfaces/build-cache-key-options.interface';
 import { buildCacheKey } from 'src/common/utils/build-cache-key.util';
 import { PaginatedResponseDto } from '../dto/paginated-response.dto';
@@ -30,13 +22,6 @@ export abstract class QueryServiceBase<T extends AbstractEntity> {
     select: string[],
   ): Promise<PaginatedResponseDto<T> | null> {
     try {
-      const cacheKey = this.getCacheKey({
-        identifier: JSON.stringify({ filter, relations, select }),
-        field: CACHE_FIELD_LIST_ALL_FILTER,
-      });
-      const cached = await this.redis.get<PaginatedResponseDto<T>>(cacheKey);
-      if (cached) return cached;
-
       const page = filter.page || 1;
       const limit = filter.limit || 10;
       const sortBy = filter.sortBy || 'createdAt';
@@ -76,24 +61,17 @@ export abstract class QueryServiceBase<T extends AbstractEntity> {
         });
       }
 
-      // Add valid relations
+      // Add valid relations first
       if (relations && relations.length > 0) {
         this.autoJoinRelations(queryBuilder, entityAlias, relations);
       }
 
-      // Add sorting and pagination
-      queryBuilder
-        .orderBy(`${entityAlias}.${sortBy}`, sortOrder as 'ASC' | 'DESC')
-        .skip(skip)
-        .take(limit);
-
-      this.logger.log(
-        `Finding all ${entityName} with query:`,
-        queryBuilder.getQuery(),
-      );
-
-      // Add select
-      if (select && select.length > 0) {
+      // Only apply select if no relations are requested (to avoid conflicts)
+      if (
+        select &&
+        select.length > 0 &&
+        (!relations || relations.length === 0)
+      ) {
         const auditFields = [
           'createdAt',
           'updatedAt',
@@ -116,15 +94,26 @@ export abstract class QueryServiceBase<T extends AbstractEntity> {
         );
       }
 
+      // Add sorting and pagination
+      queryBuilder
+        .orderBy(`${entityAlias}.${sortBy}`, sortOrder as 'ASC' | 'DESC')
+        .skip(skip)
+        .take(limit);
+
       this.logger.log(
         `Finding all ${entityName} with query:`,
         queryBuilder.getQuery(),
       );
 
       const [data, totalItems] = await queryBuilder.getManyAndCount();
+
+      // Filter audit fields from relations
+      if (relations && relations.length > 0) {
+        this.filterAuditFieldsFromRelations(data, relations);
+      }
+
       const result = new PaginatedResponseDto<T>(data, totalItems, page, limit);
 
-      if (result) await this.redis.set(cacheKey, result, TTL_SECONDS);
       return result;
     } catch (error) {
       this.logger.error(`Error finding all ${this.getEntityName()}:`, error);
@@ -134,12 +123,6 @@ export abstract class QueryServiceBase<T extends AbstractEntity> {
 
   async findOneByOptions(options: FindOptionsWhere<T>): Promise<T | null> {
     try {
-      const cacheKey = this.getCacheKey({
-        identifier: JSON.stringify(options),
-        field: CACHE_FIELD_FIND_ONE_OPTIONS,
-      });
-      const cached = await this.redis.get<T>(cacheKey);
-      if (cached) return cached;
       const whereCondition = {
         ...options,
         deletedAt: null,
@@ -148,7 +131,6 @@ export abstract class QueryServiceBase<T extends AbstractEntity> {
       const result = await this.repository.findOne({
         where: whereCondition,
       });
-      if (result) await this.redis.set(cacheKey, result, TTL_SECONDS);
       return result;
     } catch (error) {
       this.logger.error(
@@ -159,20 +141,16 @@ export abstract class QueryServiceBase<T extends AbstractEntity> {
     }
   }
 
-  async findOne(id: string): Promise<T | null> {
+  async findOne(id: string, relations?: string[]): Promise<T | null> {
     try {
-      const cacheKey = this.getCacheKey({
-        identifier: id,
-        field: CACHE_FIELD_DETAIL,
-      });
-      const cached = await this.redis.get<T>(cacheKey);
-      if (cached) return cached;
-
-      const result = await this.repository.findOne({
+      const entity = await this.repository.findOne({
         where: { id, deletedAt: null } as any as FindOptionsWhere<T>,
+        relations: relations && relations.length > 0 ? relations : [],
       });
-      if (result) await this.redis.set(cacheKey, result, TTL_SECONDS);
-      return result;
+      if (relations && relations.length > 0 && entity) {
+        this.filterAuditFieldsFromRelations([entity], relations);
+      }
+      return entity;
     } catch (error) {
       this.logger.error(
         `Error finding one ${this.getEntityName()} with id ${id}:`,
@@ -184,12 +162,6 @@ export abstract class QueryServiceBase<T extends AbstractEntity> {
 
   async findAllByOptions(options: FindOptionsWhere<T>): Promise<T[] | null> {
     try {
-      const cacheKey = this.getCacheKey({
-        identifier: JSON.stringify(options),
-        field: CACHE_FIELD_FIND_ALL_OPTIONS,
-      });
-      const cached = await this.redis.get<T[]>(cacheKey);
-      if (cached) return cached;
       const whereCondition = {
         ...options,
         deletedAt: null,
@@ -197,7 +169,6 @@ export abstract class QueryServiceBase<T extends AbstractEntity> {
       const result = await this.repository.find({
         where: whereCondition,
       });
-      if (result) await this.redis.set(cacheKey, result, TTL_SECONDS);
       return result;
     } catch (error) {
       this.logger.error(
@@ -207,45 +178,12 @@ export abstract class QueryServiceBase<T extends AbstractEntity> {
       throw error;
     }
   }
-
-  async findOneWithRelations(
-    id: string,
-    relations: string[],
-  ): Promise<T | null> {
-    try {
-      const cacheKey = this.getCacheKey({
-        identifier: id,
-        field: CACHE_FIELD_DETAIL,
-      });
-      const cached = await this.redis.get<T>(cacheKey);
-      if (cached) return cached;
-
-      const result = await this.repository.findOne({
-        where: { id, deletedAt: null } as any as FindOptionsWhere<T>,
-        relations: relations && relations.length > 0 ? relations : [],
-      });
-      if (result) await this.redis.set(cacheKey, result, TTL_SECONDS);
-      return result;
-    } catch (error) {
-      this.logger.error(
-        `Error finding one ${this.getEntityName()} with id ${id} and relations ${relations.join(', ')}:`,
-        error,
-      );
-      throw error;
-    }
-  }
-
   async selectOptions(): Promise<T[] | null> {
     try {
-      const cacheKey = this.getCacheKey({ field: CACHE_FIELD_SELECT_OPTIONS });
-      const cached = await this.redis.get<T[]>(cacheKey);
-      if (cached) return cached;
-
       const result = await this.repository.find({
         where: { deletedAt: null } as any as FindOptionsWhere<T>,
         select: ['id', 'name'] as Array<keyof T>,
       });
-      if (result) await this.redis.set(cacheKey, result, TTL_SECONDS);
       return result;
     } catch (error) {
       this.logger.error(
@@ -270,7 +208,7 @@ export abstract class QueryServiceBase<T extends AbstractEntity> {
   }
 
   private autoJoinRelations(
-    queryBuilder: any,
+    queryBuilder: SelectQueryBuilder<T>,
     baseAlias: string,
     relations: string[],
   ) {
@@ -285,12 +223,46 @@ export abstract class QueryServiceBase<T extends AbstractEntity> {
         const fullPath = `${currentAlias}.${part}`;
 
         if (!joined.has(fullPath)) {
+          // Use leftJoinAndSelect to fetch relation data
           queryBuilder.leftJoinAndSelect(fullPath, nextAlias);
           joined.add(fullPath);
         }
 
         currentAlias = nextAlias;
       }
+    });
+  }
+
+  private filterAuditFieldsFromRelations(entities: T[], relations: string[]) {
+    const fieldsToRemove = [
+      'createdAt',
+      'updatedAt',
+      'createdBy',
+      'updatedBy',
+      'deletedAt',
+    ];
+
+    entities.forEach((entity) => {
+      relations.forEach((relation) => {
+        if (
+          entity &&
+          entity[relation] &&
+          typeof entity[relation] === 'object'
+        ) {
+          // Handle both single object and array of objects
+          if (Array.isArray(entity[relation])) {
+            entity[relation].forEach((item: any) => {
+              fieldsToRemove.forEach((field) => {
+                delete item[field];
+              });
+            });
+          } else {
+            fieldsToRemove.forEach((field) => {
+              delete entity[relation][field];
+            });
+          }
+        }
+      });
     });
   }
 
