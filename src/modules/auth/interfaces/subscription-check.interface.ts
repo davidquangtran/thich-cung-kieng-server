@@ -2,9 +2,8 @@ import { UserSubscriptionStatus } from 'src/common/enums/user-subscription.enum'
 
 export interface SubscriptionCheckResult {
   hasActiveSubscription: boolean;
-  subscriptionStatus: UserSubscriptionStatus | null;
+  subscriptionStatus: UserSubscriptionStatus;
   subscriptionDetails: {
-    id?: string;
     startDate?: Date;
     endDate?: Date;
     autoRenew?: boolean;

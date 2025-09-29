@@ -8,9 +8,16 @@ import { GoogleAuthService } from './google/services/google-auth.service';
 import { MailModule } from 'src/shared/mail/mail.module';
 import { SubscriptionCheckService } from './services/subscription-check.service';
 import { UserSubscriptionModule } from '../user-subscription/user-subscription.module';
+import { SubscriptionPlanModule } from '../subscription-plan/subscription-plan.module';
 
 @Module({
-  imports: [UserModule, JwtModule, MailModule, UserSubscriptionModule],
+  imports: [
+    UserModule,
+    JwtModule,
+    MailModule,
+    UserSubscriptionModule,
+    SubscriptionPlanModule,
+  ],
   controllers: [AuthController],
   providers: [
     AuthService,

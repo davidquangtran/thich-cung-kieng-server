@@ -15,7 +15,8 @@ export class CreateUserSubscriptionDto {
     format: 'date-time',
   })
   @IsDateString()
-  startDate: string;
+  @IsOptional()
+  startDate?: string;
 
   @ApiProperty({
     description: 'End date of the subscription',
@@ -23,7 +24,8 @@ export class CreateUserSubscriptionDto {
     format: 'date-time',
   })
   @IsDateString()
-  endDate: string;
+  @IsOptional()
+  endDate?: string;
 
   @ApiProperty({
     description: 'Status of the subscription',

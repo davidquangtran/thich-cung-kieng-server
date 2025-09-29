@@ -121,7 +121,10 @@ export abstract class QueryServiceBase<T extends AbstractEntity> {
     }
   }
 
-  async findOneByOptions(options: FindOptionsWhere<T>): Promise<T | null> {
+  async findOneByOptions(
+    options: FindOptionsWhere<T>,
+    relations?: string[],
+  ): Promise<T | null> {
     try {
       const whereCondition = {
         ...options,
@@ -130,6 +133,7 @@ export abstract class QueryServiceBase<T extends AbstractEntity> {
 
       const result = await this.repository.findOne({
         where: whereCondition,
+        relations: relations && relations.length > 0 ? relations : [],
       });
       return result;
     } catch (error) {
