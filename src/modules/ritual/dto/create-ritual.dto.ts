@@ -36,10 +36,10 @@ export class CreateRitualDto {
   @ApiProperty({
     description: 'Solar date for the ritual',
     example: '2024-02-14',
-    format: 'date',
   })
-  @IsDateString()
-  dateSolar: string;
+  @IsString()
+  @IsOptional()
+  dateSolar?: string;
 
   @ApiProperty({
     description: 'Difficulty level of performing the ritual',

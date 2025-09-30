@@ -12,15 +12,13 @@ import {
 import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { Public } from 'src/common/decorators/public.decorator';
 import { RitualOfferingService } from './ritual-offering.service';
-import { CreateRitualOfferingDto } from './dto/create-ritual-offering.dto';
-import { UpdateRitualOfferingDto } from './dto/update-ritual-offering.dto';
 import { FilterRitualOfferingDto } from './dto/filter-ritual-offering.dto';
 import { CreateRitualOfferingWithRelationsDto } from './dto/create-ritual-offering-with-relations.dto';
 import { UpdateRitualOfferingWithRelationsDto } from './dto/update-ritual-offering-with-relations.dto';
 
 @Public()
-@ApiTags('Offerings')
-@Controller('offering')
+@ApiTags('RitualOfferings')
+@Controller('RitualOfferings')
 export class RitualOfferingController {
   constructor(private readonly offeringService: RitualOfferingService) {}
   @Post('with-relations')
