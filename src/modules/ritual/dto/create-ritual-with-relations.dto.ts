@@ -56,24 +56,37 @@ export class RitualTagInputDto {
 
 export class RitualOfferingInputDto {
   @ApiProperty({
-    description: 'ID of the associated offering',
-    example: '550e8400-e29b-41d4-a716-446655440000',
-    format: 'uuid',
+    description: 'Name of the offering',
+    example: 'Hoa tươi',
   })
-  @IsUUID()
-  offeringId: string;
+  @IsString()
+  name: string;
 
   @ApiProperty({
     description:
-      'Quantity of the offering in the ritual (defaults to 1 if not provided)',
-    example: 3,
-    minimum: 1,
-    default: 1,
+      'Description of the offering, e.g., "3 bunches of fresh flowers"',
+    example: '3 bunches of fresh flowers',
     required: false,
   })
   @IsOptional()
-  @IsNumber()
-  quantity?: number = 1;
+  @IsString()
+  description?: string;
+}
+export class RitualTrayInputDto {
+  @ApiProperty({
+    description: 'ID of the ritual tray',
+    example: '550e8400-e29b-41d4-a716-446655440001',
+    format: 'uuid',
+  })
+  @IsUUID()
+  ritualId: string;
+
+  @ApiProperty({
+    description: 'Name of the ritual tray',
+    example: 'Mâm cúng gia tiên',
+  })
+  @IsString()
+  name: string;
 }
 
 export class RitualPrayerInputDto {
@@ -121,6 +134,17 @@ export class RitualRelationsDto {
   @ValidateNested({ each: true })
   @Type(() => RitualOfferingInputDto)
   ritualOfferings?: RitualOfferingInputDto[];
+
+  @ApiProperty({
+    description: 'Ritual trays to associate',
+    type: [RitualTrayInputDto],
+    required: false,
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => RitualTrayInputDto)
+  ritualTrays?: RitualTrayInputDto[];
 
   @ApiProperty({
     description: 'Ritual media to associate (1-N relationship)',

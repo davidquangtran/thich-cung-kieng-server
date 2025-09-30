@@ -1,30 +1,20 @@
+import { IsString, IsNumber, IsOptional, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsUUID } from 'class-validator';
 
 export class CreateRitualOfferingDto {
   @ApiProperty({
-    description: 'ID of the associated ritual',
-    example: '550e8400-e29b-41d4-a716-446655440000',
-    format: 'uuid',
+    description: 'Name of the offering',
+    example: 'Hoa quả 5 món',
   })
-  @IsUUID()
-  ritualId: string;
-  @ApiProperty({
-    description: 'ID of the associated offering',
-    example: '550e8400-e29b-41d4-a716-446655440000',
-    format: 'uuid',
-  })
-  @IsUUID()
-  offeringId: string;
+  @IsString()
+  name: string;
 
   @ApiProperty({
-    description: 'Quantity of the offering in the ritual (defaults to 1)',
-    example: 1,
-    minimum: 1,
-    default: 1,
+    description: 'Description of the offering',
+    example: 'Hoa quả tươi gồm: táo, cam, chuối, xoài, nho',
     required: false,
   })
   @IsOptional()
-  @IsNumber()
-  quantity?: number = 1;
+  @IsString()
+  description?: string;
 }

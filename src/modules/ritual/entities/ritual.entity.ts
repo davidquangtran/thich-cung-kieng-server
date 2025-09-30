@@ -8,6 +8,7 @@ import { RitualReview } from 'src/modules/ritual-review/entities/ritual-review.e
 import { RitualCategory } from 'src/modules/ritual-category/entities/ritual-category.entity';
 import { UserFavoriteRitual } from 'src/modules/user-favorite-ritual/entities/user-favorite-ritual.entity';
 import { RitualOffering } from 'src/modules/ritual-offering/entities/ritual-offering.entity';
+import { RitualTray } from 'src/modules/ritual-tray/entities/ritual-tray.entity';
 
 @Entity({ name: 'rituals' })
 export class Ritual extends AbstractEntity {
@@ -60,6 +61,11 @@ export class Ritual extends AbstractEntity {
     cascade: true,
   })
   ritualOfferings: RitualOffering[];
+
+  @OneToMany(() => RitualTray, (ritualTray) => ritualTray.ritual, {
+    cascade: true,
+  })
+  ritualTrays: RitualTray[];
 
   @OneToMany(() => Prayer, (prayer) => prayer.ritual, { cascade: true })
   prayers: Prayer[];

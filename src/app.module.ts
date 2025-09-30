@@ -18,7 +18,7 @@ import { ChatMessageModule } from './modules/chat-message/chat-message.module';
 import { RitualModule } from './modules/ritual/ritual.module';
 import { RitualMediaModule } from './modules/ritual-media/ritual-media.module';
 import { RitualTagModule } from './modules/ritual-tag/ritual-tag.module';
-import { OfferingModule } from './modules/offering/offering.module';
+import { RitualOfferingModule } from './modules/ritual-offering/ritual-offering.module';
 import { OfferingMediaModule } from './modules/offering-media/offering-media.module';
 import { PaymentModule } from './modules/payment/payment.module';
 import { PaymentLogModule } from './modules/payment-log/payment-log.module';
@@ -34,8 +34,8 @@ import { UserSubscriptionModule } from './modules/user-subscription/user-subscri
 import { RitualCategoryModule } from './modules/ritual-category/ritual-category.module';
 import { UserFavoriteRitualModule } from './modules/user-favorite-ritual/user-favorite-ritual.module';
 import { RequestContextInterceptor } from './common/interceptors/request-context.interceptor';
-import { OfferingRitualModule } from './modules/ritual-offering/ritual-offering.module';
 import { PayosModule } from './shared/payos/payos.module';
+import { RitualTrayModule } from './modules/ritual-tray/ritual-tray.module';
 
 @Module({
   imports: [
@@ -56,9 +56,9 @@ import { PayosModule } from './shared/payos/payos.module';
     RitualMediaModule,
     RitualTagModule,
     RitualCategoryModule,
-    OfferingModule,
+    RitualOfferingModule,
+    RitualTrayModule,
     OfferingMediaModule,
-    OfferingRitualModule,
     PaymentModule,
     PaymentLogModule,
     PlanFeatureModule,

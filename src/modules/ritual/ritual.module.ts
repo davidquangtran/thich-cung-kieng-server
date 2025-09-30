@@ -6,19 +6,19 @@ import { Ritual } from './entities/ritual.entity';
 import { RedisModule } from 'src/shared/redis/redis.module';
 import { RitualMediaModule } from '../ritual-media/ritual-media.module';
 import { RitualTagModule } from '../ritual-tag/ritual-tag.module';
-import { OfferingRitualModule } from '../ritual-offering/ritual-offering.module';
 import { PrayerModule } from '../prayer/prayer.module';
 import { TagModule } from '../tag/tag.module';
-import { OfferingModule } from '../offering/offering.module';
+import { RitualOfferingModule } from '../ritual-offering/ritual-offering.module';
+import { RitualTrayModule } from '../ritual-tray/ritual-tray.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Ritual], 'postgresql'),
     RedisModule,
-    OfferingRitualModule,
-    OfferingModule,
+    RitualOfferingModule,
     RitualMediaModule,
     RitualTagModule,
+    RitualTrayModule,
     TagModule,
     PrayerModule,
   ],

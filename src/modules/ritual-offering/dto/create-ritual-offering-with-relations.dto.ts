@@ -7,7 +7,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { MediaType } from 'src/common/enums/media.enum';
-import { CreateOfferingDto } from './create-offering.dto';
+import { CreateRitualOfferingDto } from './create-ritual-offering.dto';
 import { Type } from 'class-transformer';
 
 export class OfferingMediasDto {
@@ -41,7 +41,7 @@ export class OfferingMediasDto {
   alt?: string;
 }
 
-export class OfferingRelationsDto {
+export class RitualOfferingRelationsDto {
   @ApiProperty({
     description: 'List of media associated with the offering',
     type: [OfferingMediasDto],
@@ -60,23 +60,23 @@ export class OfferingRelationsDto {
   offeringMedias?: OfferingMediasDto[];
 }
 
-export class CreateOfferingWithRelationsDto {
+export class CreateRitualOfferingWithRelationsDto {
   @ApiProperty({
     description: 'Details of the offering to create',
     example:
-      '{ "name": "Bánh chưng", "description": "Bánh chưng truyền thống", "price": 50000 }',
+      '{ "name": "Bánh chưng", "description": "Bánh chưng truyền thống" }',
   })
   @ValidateNested()
-  @Type(() => CreateOfferingDto)
-  offering: CreateOfferingDto;
+  @Type(() => CreateRitualOfferingDto)
+  ritualOffering: CreateRitualOfferingDto;
 
   @ApiProperty({
     description: 'Related entities for the offering',
     required: false,
-    type: OfferingRelationsDto,
+    type: RitualOfferingRelationsDto,
   })
   @IsOptional()
   @ValidateNested()
-  @Type(() => OfferingRelationsDto)
-  relations?: OfferingRelationsDto;
+  @Type(() => RitualOfferingRelationsDto)
+  relations?: RitualOfferingRelationsDto;
 }

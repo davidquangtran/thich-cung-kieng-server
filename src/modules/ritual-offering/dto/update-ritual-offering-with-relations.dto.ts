@@ -8,10 +8,10 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { MediaType } from 'src/common/enums/media.enum';
-import { UpdateOfferingDto } from './update-offering.dto';
+import { UpdateRitualOfferingDto } from './update-ritual-offering.dto';
 import { Type } from 'class-transformer';
 
-export class UpdateOfferingMediasDto {
+export class UpdateRitualOfferingMediasDto {
   @ApiProperty({
     description: 'ID of the media (for existing media, omit for new)',
     example: '123e4567-e89b-12d3-a456-426614174000',
@@ -53,8 +53,9 @@ export class UpdateOfferingMediasDto {
 
 export class UpdateOfferingRelationsDto {
   @ApiProperty({
-    description: 'List of media associated with the offering. Include existing media with IDs to update, omit IDs for new media, exclude from array to delete.',
-    type: [UpdateOfferingMediasDto],
+    description:
+      'List of media associated with the offering. Include existing media with IDs to update, omit IDs for new media, exclude from array to delete.',
+    type: [UpdateRitualOfferingMediasDto],
     required: false,
     example: [
       {
@@ -72,11 +73,11 @@ export class UpdateOfferingRelationsDto {
   })
   @IsOptional()
   @ValidateNested({ each: true })
-  @Type(() => UpdateOfferingMediasDto)
-  offeringMedias?: UpdateOfferingMediasDto[];
+  @Type(() => UpdateRitualOfferingMediasDto)
+  offeringMedias?: UpdateRitualOfferingMediasDto[];
 }
 
-export class UpdateOfferingWithRelationsDto {
+export class UpdateRitualOfferingWithRelationsDto {
   @ApiProperty({
     description: 'Details of the offering to update',
     required: false,
@@ -85,8 +86,8 @@ export class UpdateOfferingWithRelationsDto {
   })
   @IsOptional()
   @ValidateNested()
-  @Type(() => UpdateOfferingDto)
-  offering: UpdateOfferingDto;
+  @Type(() => UpdateRitualOfferingDto)
+  ritualOffering: UpdateRitualOfferingDto;
 
   @ApiProperty({
     description: 'Related entities for the offering to update',

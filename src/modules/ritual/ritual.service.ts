@@ -9,11 +9,10 @@ import { CreateRitualDto } from './dto/create-ritual.dto';
 import { RitualCategory } from '../ritual-category/entities/ritual-category.entity';
 import { RitualMediaService } from '../ritual-media/ritual-media.service';
 import { RitualTagService } from '../ritual-tag/ritual-tag.service';
-import { RitualOfferingService } from '../ritual-offering/ritual-offering.service';
 import { PrayerService } from '../prayer/prayer.service';
-import { RitualOffering } from '../ritual-offering/entities/ritual-offering.entity';
 import { TagService } from '../tag/tag.service';
-import { OfferingService } from '../offering/offering.service';
+import { RitualOfferingService } from '../ritual-offering/ritual-offering.service';
+import { RitualTrayService } from '../ritual-tray/ritual-tray.service';
 
 @Injectable()
 export class RitualService extends BaseService<Ritual> {
@@ -22,7 +21,7 @@ export class RitualService extends BaseService<Ritual> {
     private readonly ritualRepository: Repository<Ritual>,
     private readonly redisService: RedisService,
     private readonly ritualOfferingService: RitualOfferingService,
-    private readonly offeringService: OfferingService,
+    private readonly ritualTrayService: RitualTrayService,
     private readonly ritualMediaService: RitualMediaService,
     private readonly ritualTagService: RitualTagService,
     private readonly tagService: TagService,
@@ -117,26 +116,28 @@ export class RitualService extends BaseService<Ritual> {
     relationData?: Record<string, any>,
   ): Promise<void> {
     const promises: Promise<any>[] = [];
+
     if (relationData?.ritualOfferings?.length) {
-      for (const offering of relationData.ritualOfferings) {
-        const isOfferingExist = await this.offeringService.findOne(
-          offering.offeringId,
-        );
-        if (!isOfferingExist) {
-          throw new BadRequestException(
-            `Offering with id ${offering.offeringId} does not exist`,
-          );
-        }
-      }
       for (const offering of relationData.ritualOfferings) {
         const ritualOffering = {
           ritualId: mainEntity.id,
-          offeringId: offering.offeringId,
-          quantity: offering.quantity || 1,
+          name: offering.name,
+          description: offering.description,
         };
         promises.push(this.ritualOfferingService.create(ritualOffering));
       }
     }
+
+    if (relationData?.ritualTrays?.length) {
+      for (const tray of relationData.ritualTrays) {
+        const ritualTray = {
+          ritualId: mainEntity.id,
+          name: tray.name,
+        };
+        promises.push(this.ritualTrayService.create(ritualTray));
+      }
+    }
+
     if (relationData?.ritualMedias?.length) {
       relationData.ritualMedias.forEach((media) => {
         const ritualMedia = {
@@ -193,61 +194,80 @@ export class RitualService extends BaseService<Ritual> {
     relationData?: Record<string, any>,
   ): Promise<void> {
     const promises: Promise<any>[] = [];
-
-    // Smart offering updates - only change what's different
     if (relationData?.ritualOfferings) {
       const existingOfferings =
         await this.ritualOfferingService.findAllByOptions({
           ritualId: mainEntity.id,
         });
       const inputOfferings = relationData.ritualOfferings;
-
-      // Create maps for easy lookup
       const existingMap = new Map(
-        (existingOfferings ?? []).map((o) => [o.offeringId, o]),
+        (existingOfferings ?? []).map((o) => [o.name, o]),
       );
-      const inputMap = new Map(inputOfferings.map((o) => [o.offeringId, o]));
-
-      // Find what to add, update, and remove
+      const inputMap = new Map(inputOfferings.map((o) => [o.name, o]));
       const toAdd = inputOfferings.filter(
-        (input) => !existingMap.has(input.offeringId),
+        (input) => !existingMap.has(input.name),
       );
       const toRemove = (existingOfferings ?? []).filter(
-        (existing) => !inputMap.has(existing.offeringId),
+        (existing) => !inputMap.has(existing.name),
       );
+
       const toUpdate = inputOfferings.filter((input) => {
-        const existing = existingMap.get(input.offeringId);
-        return existing && existing.quantity !== input.quantity;
+        const existing = existingMap.get(input.name);
+        return existing && existing.description !== input.description;
       });
 
-      // Execute changes
+      for (const offering of toUpdate) {
+        const existing = existingMap.get(offering.name);
+        if (existing?.id) {
+          promises.push(
+            this.ritualOfferingService.update(existing.id, {
+              description: offering.description,
+            }),
+          );
+        }
+      }
       for (const offering of toAdd) {
         promises.push(
           this.ritualOfferingService.create({
             ritualId: mainEntity.id,
-            offeringId: offering.offeringId,
-            quantity: offering.quantity || 1,
+            name: offering.name,
+            description: offering.description,
           }),
         );
       }
-
       for (const offering of toRemove) {
         promises.push(this.ritualOfferingService.remove(offering.id));
       }
+    }
 
-      for (const offering of toUpdate) {
-        const existing = existingMap.get(offering.offeringId);
-        if (existing?.id) {
-          promises.push(
-            this.ritualOfferingService.updateField(
-              existing.id,
-              'quantity',
-              offering.quantity,
-            ),
-          );
-        }
+    if (relationData?.ritualTrays) {
+      const existingTrays = await this.ritualTrayService.findAllByOptions({
+        ritualId: mainEntity.id,
+      });
+      const inputTrays = relationData.ritualTrays;
+      const existingMap = new Map(
+        (existingTrays ?? []).map((o) => [o.name, o]),
+      );
+      const inputMap = new Map(inputTrays.map((o) => [o.name, o]));
+      const toAdd = inputTrays.filter((input) => !existingMap.has(input.name));
+      const toRemove = (existingTrays ?? []).filter(
+        (existing) => !inputMap.has(existing.name),
+      );
+      // No update for trays since only name is stored
+
+      for (const tray of toAdd) {
+        promises.push(
+          this.ritualTrayService.create({
+            ritualId: mainEntity.id,
+            name: tray.name,
+          }),
+        );
+      }
+      for (const tray of toRemove) {
+        promises.push(this.ritualTrayService.remove(tray.id));
       }
     }
+
     if (relationData?.ritualMedias) {
       const existingMedias = await this.ritualMediaService.findAllByOptions({
         ritualId: mainEntity.id,

@@ -1,6 +1,6 @@
 import { AbstractEntity } from 'src/common/base/entity.base';
 import { MediaType } from 'src/common/enums/media.enum';
-import { Offering } from 'src/modules/offering/entities/offering.entity';
+import { RitualOffering } from 'src/modules/ritual-offering/entities/ritual-offering.entity';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 @Entity('offering_media')
@@ -17,9 +17,12 @@ export class OfferingMedia extends AbstractEntity {
   @Column({ name: 'offering_id' })
   offeringId: string;
 
-  @ManyToOne(() => Offering, (offering) => offering.offeringMedias)
+  @ManyToOne(
+    () => RitualOffering,
+    (ritualOffering) => ritualOffering.offeringMedias,
+  )
   @JoinColumn({ name: 'offering_id' })
-  offering: Offering;
+  ritualOffering: RitualOffering;
 
   constructor(partial: Partial<OfferingMedia>) {
     super();
