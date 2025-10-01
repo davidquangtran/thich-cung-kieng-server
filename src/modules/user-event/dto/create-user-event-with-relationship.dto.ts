@@ -14,7 +14,7 @@ import {
 } from 'src/common/enums/user-event-reminder.enum';
 import { CreateUserEventDto } from './create-user-event.dto';
 
-export class CreateUserEventOfferingDto {
+export class UserEventOfferingInputDto {
   @ApiProperty({
     description: 'Name of the offering',
     example: 'Incense sticks',
@@ -40,7 +40,7 @@ export class CreateUserEventOfferingDto {
   note?: string;
 }
 
-export class CreateUserEventReminderDto {
+export class UserEventReminderInputDto {
   @ApiProperty({
     description: 'Minutes before the event to send reminder',
     example: 30,
@@ -71,7 +71,7 @@ export class CreateUserEventReminderDto {
 export class UserEventRelationDto {
   @ApiProperty({
     description: 'List of reminders associated with the event',
-    type: [CreateUserEventReminderDto],
+    type: [UserEventReminderInputDto],
     required: false,
     example: [
       {
@@ -88,12 +88,12 @@ export class UserEventRelationDto {
   })
   @IsOptional()
   @ValidateNested({ each: true })
-  @Type(() => CreateUserEventReminderDto)
-  eventReminders?: CreateUserEventReminderDto[];
+  @Type(() => UserEventReminderInputDto)
+  eventReminders?: UserEventReminderInputDto[];
 
   @ApiProperty({
     description: 'List of offerings associated with the event',
-    type: [CreateUserEventOfferingDto],
+    type: [UserEventOfferingInputDto],
     required: false,
     example: [
       {
@@ -110,8 +110,8 @@ export class UserEventRelationDto {
   })
   @IsOptional()
   @ValidateNested({ each: true })
-  @Type(() => CreateUserEventOfferingDto)
-  eventOfferings?: CreateUserEventOfferingDto[];
+  @Type(() => UserEventOfferingInputDto)
+  eventOfferings?: UserEventOfferingInputDto[];
 }
 
 export class CreateUserEventWithRelationshipDto {
