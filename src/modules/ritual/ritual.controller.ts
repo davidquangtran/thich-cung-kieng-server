@@ -68,7 +68,6 @@ export class RitualController {
       'ritualTags',
       'ritualTags.tag',
       'ritualOfferings',
-      'ritualOfferings.offering',
       'prayers',
       'ritualReviews',
     ]);
