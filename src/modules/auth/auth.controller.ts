@@ -140,22 +140,6 @@ export class AuthController {
     const urlParams = new URLSearchParams({
       accessToken: response.tokens.accessToken,
     });
-    if (response.subscription) {
-      // Tạo subscription summary để pass qua URL
-      const subscriptionSummary = {
-        hasSubscription: response.subscription.hasActiveSubscription,
-        status: response.subscription.subscriptionStatus,
-        planName: response.subscription.subscriptionDetails?.plan?.name,
-        daysRemaining: response.subscription.subscriptionDetails?.daysRemaining,
-      };
-
-      // Encode subscription info thành base64
-      const subscriptionParam = Buffer.from(
-        JSON.stringify(subscriptionSummary),
-      ).toString('base64');
-
-      urlParams.append('subscription', subscriptionParam);
-    }
     // // Redirect to frontend with access token
     res.redirect(
       `${this.configService.get<string>('server.clientUrl')}/auth/callback?${urlParams.toString()}`,
