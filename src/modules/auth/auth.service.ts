@@ -70,10 +70,25 @@ export class AuthService {
       throw new BadRequestException('Failed to create or find user');
     }
 
+    let subscriptionInfo: any = null;
+    try {
+      subscriptionInfo =
+        await this.subscriptionCheckService.checkUserSubscriptionOnLogin(id);
+    } catch (error) {
+      console.warn('Failed to check subscription on login:', error.message);
+      // Don't fail login if subscription check fails
+    }
+    const subscriptionSummary = {
+      hasSubscription: subscriptionInfo.hasActiveSubscription,
+      status: subscriptionInfo.subscriptionStatus,
+      planName: subscriptionInfo.subscriptionDetails?.plan?.name,
+      daysRemaining: subscriptionInfo.subscriptionDetails?.daysRemaining,
+    };
     const payload = {
       sub: id,
       email: user.email,
       role: existingUser?.role || 'user',
+      subscription: subscriptionSummary,
     };
     const tokens = await this.getTokens(payload);
 
@@ -83,14 +98,6 @@ export class AuthService {
     }
 
     // Check user subscription on login
-    let subscriptionInfo: any = null;
-    try {
-      subscriptionInfo =
-        await this.subscriptionCheckService.checkUserSubscriptionOnLogin(id);
-    } catch (error) {
-      console.warn('Failed to check subscription on login:', error.message);
-      // Don't fail login if subscription check fails
-    }
 
     return {
       tokens,

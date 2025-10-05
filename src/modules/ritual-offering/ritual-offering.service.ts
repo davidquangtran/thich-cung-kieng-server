@@ -21,7 +21,7 @@ export class RitualOfferingService extends BaseService<RitualOffering> {
     super(offeringRepository, redisService);
   }
   protected getDuplicateFields(): string[] {
-    return ['name'];
+    return [];
   }
 
   protected getDefaultRelations(): string[] {
