@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { SubscriptionCheckService } from 'src/modules/auth/services/subscription-check.service';
-import { FeatureAccessService } from '../services/feature-access.service';
+import { FeatureAccessService } from '../../modules/auth/services/feature-access.service';
 
 @Injectable()
 export class SubscriptionGuard implements CanActivate {

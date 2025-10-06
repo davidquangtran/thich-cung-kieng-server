@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { REQUIRE_FEATURE_KEY } from '../decorators/require-feature.decorator';
-import { FeatureAccessService } from '../services/feature-access.service';
+import { FeatureAccessService } from '../../modules/auth/services/feature-access.service';
 
 @Injectable()
 export class FeatureGuard implements CanActivate {
