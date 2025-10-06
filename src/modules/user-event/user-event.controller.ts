@@ -74,7 +74,7 @@ export class UserEventController {
     }
   }
 
-  @Patch(':id')
+  @Delete(':id')
   remove(@Param('id') id: string) {
     return this.userEventService.softRemove(id);
   }
