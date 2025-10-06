@@ -36,6 +36,7 @@ import { UserFavoriteRitualModule } from './modules/user-favorite-ritual/user-fa
 import { RequestContextInterceptor } from './common/interceptors/request-context.interceptor';
 import { PayosModule } from './shared/payos/payos.module';
 import { RitualTrayModule } from './modules/ritual-tray/ritual-tray.module';
+import { AdaptersModule } from './modules/adapters/adapters.module';
 
 @Module({
   imports: [
@@ -72,6 +73,7 @@ import { RitualTrayModule } from './modules/ritual-tray/ritual-tray.module';
     UserSubscriptionModule,
     UserFavoriteRitualModule,
     PayosModule,
+    AdaptersModule,
   ],
   controllers: [],
   providers: [
