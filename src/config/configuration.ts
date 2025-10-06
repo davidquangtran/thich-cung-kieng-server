@@ -82,4 +82,13 @@ export default () => ({
     checksumKey: process.env.PAYOS_CHECK_SUM_KEY,
     webhookUrl: process.env.PAYOS_WEBHOOK_URL,
   },
+
+  // TTS configuration
+  tts: {
+    apiUrl: process.env.TTS_API_URL,
+  },
+  // STT configuration
+  stt: {
+    apiUrl: process.env.STT_API_URL,
+  },
 });

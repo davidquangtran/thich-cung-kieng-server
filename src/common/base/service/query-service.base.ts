@@ -135,6 +135,9 @@ export abstract class QueryServiceBase<T extends AbstractEntity> {
         where: whereCondition,
         relations: relations && relations.length > 0 ? relations : [],
       });
+       if (relations && relations.length > 0 && result) {
+        this.filterAuditFieldsFromRelations([result], relations);
+      }
       return result;
     } catch (error) {
       this.logger.error(

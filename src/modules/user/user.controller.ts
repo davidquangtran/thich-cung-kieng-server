@@ -84,7 +84,7 @@ export class UserController {
   async getMe(@Req() req: Request & { user: { email: string } }) {
     const user = await this.usersService.findOneByOptions({
       email: req.user.email,
-    });
+    }, ['userSubscriptions', 'userSubscriptions.subscriptionPlan']);
     if (!user) {
       throw new Error('User not found');
     }
