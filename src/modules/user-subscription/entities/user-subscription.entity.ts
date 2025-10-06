@@ -31,6 +31,7 @@ export class UserSubscription extends AbstractEntity {
   subscriptionPlanId: string;
 
   @ManyToOne(() => User, (user) => user.userSubscriptions)
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
   @ManyToOne(
