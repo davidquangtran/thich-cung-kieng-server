@@ -1,7 +1,7 @@
 import { FindOptionsWhere, Repository, SelectQueryBuilder } from 'typeorm';
 import { AbstractEntity } from '../entity.base';
 import { RedisService } from 'src/shared/redis/redis.service';
-import { BadRequestException, Logger } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { CACHE_NAMESPACE } from 'src/common/constants/cache.constant';
 import { BuildCacheKeyOptions } from 'src/common/interfaces/build-cache-key-options.interface';
 import { buildCacheKey } from 'src/common/utils/build-cache-key.util';
@@ -37,27 +37,18 @@ export abstract class QueryServiceBase<T extends AbstractEntity> {
       // Add search condition
       if (search && this.getSearchableFields().length > 0) {
         const searchFields = this.getSearchableFields();
-
-        // Dùng similarity để so sánh mờ (fuzzy match)
-        const fuzzyConditions = searchFields
+        
+        // Use basic case-insensitive search instead of unaccent/similarity functions
+        // This avoids the PostgreSQL extension requirement
+        const basicConditions = searchFields
           .map(
             (field) =>
-              `similarity(unaccent(${entityAlias}."${field}"), unaccent(:search)) > 0.2`,
+              `LOWER(${entityAlias}."${field}") ILIKE LOWER(:basicSearch)`,
           )
           .join(' OR ');
 
-        // Ngoài ra, hỗ trợ ILIKE + %term% để bắt chuỗi gần chính xác
-        const ilikeConditions = searchFields
-          .map(
-            (field) =>
-              `unaccent(${entityAlias}."${field}") ILIKE unaccent(:ilikeSearch)`,
-          )
-          .join(' OR ');
-
-        // Kết hợp cả hai
-        queryBuilder.andWhere(`(${fuzzyConditions} OR ${ilikeConditions})`, {
-          search,
-          ilikeSearch: `%${search}%`,
+        queryBuilder.andWhere(`(${basicConditions})`, {
+          basicSearch: `%${search}%`,
         });
       }
 

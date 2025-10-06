@@ -12,6 +12,8 @@ export const postgresConfigFactory = (
   password: configService.get<string>('postgres.password'),
   database: configService.get<string>('postgres.name'),
   entities: [__dirname + '/../../../modules/**/*.entity{.ts,.js}'],
+  migrations: [__dirname + '/migrations/*{.ts,.js}'],
+  migrationsRun: true,
   synchronize: true,
   logging: true,
   logger: 'advanced-console',
