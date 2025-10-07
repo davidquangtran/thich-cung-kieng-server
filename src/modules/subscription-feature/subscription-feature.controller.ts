@@ -7,13 +7,14 @@ import {
   Param,
   Delete,
   Query,
+  Put,
 } from '@nestjs/common';
 import { Public } from 'src/common/decorators/public.decorator';
 import { SubscriptionFeatureService } from './subscription-feature.service';
 import { CreateSubscriptionFeatureDto } from './dto/create-subscription-feature.dto';
 import { UpdateSubscriptionFeatureDto } from './dto/update-subscription-feature.dto';
 import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
-import { ApiBody } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @Public()
 @Controller('subscription-feature')
@@ -47,7 +48,10 @@ export class SubscriptionFeatureController {
     return await this.subscriptionFeatureService.findOne(id);
   }
 
-  @Patch(':id')
+  @Put(':id')
+  @ApiOperation({ summary: 'Update a subscription feature' })
+  @ApiBody({ type: UpdateSubscriptionFeatureDto })
+  @ApiResponse({ status: 200, description: 'Subscription feature updated successfully' })
   async update(
     @Param('id') id: string,
     @Body() updateSubscriptionFeatureDto: UpdateSubscriptionFeatureDto,

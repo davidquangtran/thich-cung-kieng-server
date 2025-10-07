@@ -3,17 +3,18 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   Query,
 } from '@nestjs/common';
 import { UserFavoriteRitualService } from './user-favorite-ritual.service';
 import { CreateUserFavoriteRitualDto } from './dto/create-user-favorite-ritual.dto';
-import { UpdateUserFavoriteRitualDto } from './dto/update-user-favorite-ritual.dto';
 import { FilterUserFavoriteRitualDto } from './dto/filter-user-favorite-ritual.dto';
+import { ApiBearerAuth, ApiForbiddenResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { Public } from 'src/common/decorators/public.decorator';
 
 @Controller('user-favorite-ritual')
+@Public()
 export class UserFavoriteRitualController {
   constructor(
     private readonly userFavoriteRitualService: UserFavoriteRitualService,
