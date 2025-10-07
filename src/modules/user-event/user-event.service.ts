@@ -13,6 +13,9 @@ import { FilterUserEvent } from './dto/filter-user-event.dto';
 import { CreateUserEventDto } from './dto/create-user-event.dto';
 import { UserEventReminderService } from '../user_event_reminder/user_event_reminder.service';
 import { UserEventOfferingService } from '../user_event_offering/user_event_offering.service';
+import { UpdateUserEventDto } from './dto/update-user-event.dto';
+import { UserService } from '../user/user.service';
+import { RitualService } from '../ritual/ritual.service';
 
 @Injectable()
 export class UserEventService extends BaseService<UserEvent> {
@@ -22,6 +25,8 @@ export class UserEventService extends BaseService<UserEvent> {
     private readonly redisService: RedisService,
     private readonly userEventReminderService: UserEventReminderService,
     private readonly userEventOfferingService: UserEventOfferingService,
+    private readonly userService: UserService,
+    private readonly ritualService: RitualService,
   ) {
     super(userEventRepository, redisService);
   }
@@ -78,6 +83,27 @@ export class UserEventService extends BaseService<UserEvent> {
       throw new BadRequestException(
         'CreateUserEventDto cannot be null or undefined',
       );
+    }
+  }
+
+  protected async validateUpdateInput(
+    updateDto: UpdateUserEventDto,
+  ): Promise<void> {
+    if (!updateDto) {
+      throw new BadRequestException('UpdateUserEventDto cannot be null or undefined');
+    }
+    console.log(updateDto);
+    if (updateDto.userId) {
+      const isUserExist = await this.userService.findOne(updateDto.userId);
+      if (!isUserExist) {
+        throw new BadRequestException('User does not exist');
+      }
+    }
+    if (updateDto.ritualId) {
+      const isRitualExist = await this.ritualService.findOne(updateDto.ritualId);
+      if (!isRitualExist) {
+        throw new BadRequestException('Ritual does not exist');
+      }
     }
   }
 
@@ -145,117 +171,137 @@ export class UserEventService extends BaseService<UserEvent> {
     relationData?: Record<string, any>,
   ): Promise<void> {
     const promises: Promise<any>[] = [];
-    if (relationData?.reminders) {
+    
+    // Handle eventReminders - check if field exists in relationData
+    if (relationData && 'eventReminders' in relationData) {
       const existingReminders =
         await this.userEventReminderService.findAllByOptions({
           userEventId: mainEntity.id,
         });
-      const inputReminder = relationData.reminders;
+      const inputReminder = relationData.eventReminders || [];
 
-      // Create maps for easy lookup
-      const existingMap = new Map(
-        (existingReminders ?? []).map((o) => [o.id, o]),
-      );
-      const inputMap = new Map(inputReminder.map((r) => [r.id, r]));
-
-      // Find what to add, update, and remove
-      const toAdd = inputReminder.filter(
-        (input) => input.id && !existingMap.has(input.id),
-      );
-      const toRemove = inputReminder.filter(
-        (existing) => !inputMap.has(existing.id),
-      );
-      const toUpdate = inputReminder.filter((existing) => {
-        const input = existingMap.get(existing.id);
-        return (
-          input &&
-          (input.remindBefore !== existing.remindBefore ||
-            input.notifyMethod !== existing.notifyMethod ||
-            input.status !== existing.status)
+      if (inputReminder.length === 0) {
+        // Xóa tất cả reminders hiện có nếu không truyền gì
+        for (const reminder of existingReminders ?? []) {
+          promises.push(this.userEventReminderService.remove(reminder.id));
+        }
+      } else {
+        // Logic xử lý bình thường
+        const existingMap = new Map(
+          (existingReminders ?? []).map((o) => [o.id, o]),
         );
-      });
+        const inputMap = new Map(inputReminder.map((r) => [r.id, r]));
 
-      // Execute changes
-      for (const reminder of toAdd) {
-        promises.push(
-          this.userEventReminderService.create({
-            userEventId: mainEntity.id,
-            remindBefore: reminder.remindBefore,
-            notifyMethod: reminder.notifyMethod,
-            status: reminder.status,
-          }),
+        // Find what to add, update, and remove
+        const toAdd = inputReminder.filter(
+          (input) => !input.id || !existingMap.has(input.id),
         );
-      }
+        const toRemove = (existingReminders ?? []).filter(
+          (existing) => !inputMap.has(existing.id),
+        );
+        const toUpdate = inputReminder.filter((input) => {
+          if (!input.id) return false; // Không update items mới
+          const existing = existingMap.get(input.id);
+          return (
+            existing &&
+            (existing.remindBefore !== input.remindBefore ||
+              existing.notifyMethod !== input.notifyMethod ||
+              existing.status !== input.status)
+          );
+        });
 
-      for (const reminder of toRemove) {
-        promises.push(this.userEventReminderService.remove(reminder.id));
-      }
-
-      for (const reminder of toUpdate) {
-        const existing = existingMap.get(reminder.id);
-        if (existing?.id) {
+        // Execute changes
+        for (const reminder of toAdd) {
           promises.push(
-            this.userEventReminderService.update(existing.id, {
+            this.userEventReminderService.create({
+              userEventId: mainEntity.id,
               remindBefore: reminder.remindBefore,
               notifyMethod: reminder.notifyMethod,
               status: reminder.status,
             }),
           );
         }
+
+        for (const reminder of toRemove) {
+          promises.push(this.userEventReminderService.remove(reminder.id));
+        }
+
+        for (const reminder of toUpdate) {
+          if (reminder.id) {
+            promises.push(
+              this.userEventReminderService.update(reminder.id, {
+                remindBefore: reminder.remindBefore,
+                notifyMethod: reminder.notifyMethod,
+                status: reminder.status,
+              }),
+            );
+          }
+        }
       }
     }
 
-    if (relationData?.eventOfferings) {
+    // Handle eventOfferings - check if field exists in relationData
+    if (relationData && 'eventOfferings' in relationData) {
       const existingOfferings =
         await this.userEventOfferingService.findAllByOptions({
           userEventId: mainEntity.id,
         });
-      const inputOfferings = relationData.eventOfferings;
-      // Create maps for easy lookup
-      const existingMap = new Map(
-        (existingOfferings ?? []).map((o) => [o.id, o]),
-      );
-      const inputMap = new Map(inputOfferings.map((r) => [r.id, r]));
-      // Find what to add, update, and remove
-      const toAdd = inputOfferings.filter(
-        (input) => input.id && !existingMap.has(input.id),
-      );
-      const toRemove = inputOfferings.filter(
-        (existing) => !inputMap.has(existing.id),
-      );
-      const toUpdate = inputOfferings.filter((existing) => {
-        const input = existingMap.get(existing.id);
-        return (
-          input &&
-          (input.offeringName !== existing.offeringName ||
-            input.quantity !== existing.quantity ||
-            input.note !== existing.note)
+      const inputOfferings = relationData.eventOfferings || [];
+
+      if (inputOfferings.length === 0) {
+        // Xóa tất cả offerings hiện có nếu không truyền gì
+        for (const offering of existingOfferings ?? []) {
+          promises.push(this.userEventOfferingService.remove(offering.id));
+        }
+      } else {
+        // Logic xử lý bình thường
+        const existingMap = new Map(
+          (existingOfferings ?? []).map((o) => [o.id, o]),
         );
-      });
-      // Execute changes
-      for (const offering of toAdd) {
-        promises.push(
-          this.userEventOfferingService.create({
-            userEventId: mainEntity.id,
-            offeringName: offering.offeringName,
-            quantity: offering.quantity,
-            note: offering.note,
-          }),
+        const inputMap = new Map(inputOfferings.map((r) => [r.id, r]));
+        
+        // Find what to add, update, and remove
+        const toAdd = inputOfferings.filter(
+          (input) => !input.id || !existingMap.has(input.id),
         );
-      }
-      for (const offering of toRemove) {
-        promises.push(this.userEventOfferingService.remove(offering.id));
-      }
-      for (const offering of toUpdate) {
-        const existing = existingMap.get(offering.id);
-        if (existing?.id) {
+        const toRemove = (existingOfferings ?? []).filter(
+          (existing) => !inputMap.has(existing.id),
+        );
+        const toUpdate = inputOfferings.filter((input) => {
+          if (!input.id) return false; // Không update items mới
+          const existing = existingMap.get(input.id);
+          return (
+            existing &&
+            (existing.offeringName !== input.offeringName ||
+              existing.quantity !== input.quantity ||
+              existing.note !== input.note)
+          );
+        });
+        
+        // Execute changes
+        for (const offering of toAdd) {
           promises.push(
-            this.userEventOfferingService.update(existing.id, {
+            this.userEventOfferingService.create({
+              userEventId: mainEntity.id,
               offeringName: offering.offeringName,
               quantity: offering.quantity,
               note: offering.note,
             }),
           );
+        }
+        for (const offering of toRemove) {
+          promises.push(this.userEventOfferingService.remove(offering.id));
+        }
+        for (const offering of toUpdate) {
+          if (offering.id) {
+            promises.push(
+              this.userEventOfferingService.update(offering.id, {
+                offeringName: offering.offeringName,
+                quantity: offering.quantity,
+                note: offering.note,
+              }),
+            );
+          }
         }
       }
     }
