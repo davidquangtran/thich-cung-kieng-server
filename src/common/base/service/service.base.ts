@@ -152,6 +152,10 @@ export abstract class BaseService<
                   'ID and update data are required',
                 );
               }
+              
+              // Validate update input
+              await this.validateUpdateInput(updateDto);
+              
               const entity = await this.findOne(id);
               if (!entity) return null;
               this.repository.merge(entity, updateDto);

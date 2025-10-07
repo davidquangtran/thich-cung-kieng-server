@@ -18,7 +18,7 @@ export class UserEventReminderService extends BaseService<UserEventReminder> {
   }
 
   protected getDuplicateFields(): string[] {
-    return ['userEventId', 'remindBefore', 'notifyMethod'];
+    return [];
   }
 
   protected getDefaultRelations(): string[] {

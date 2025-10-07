@@ -18,7 +18,7 @@ export class UserEventOfferingService extends BaseService<UserEventOffering> {
   }
 
   protected getDuplicateFields(): string[] {
-    return ['userEventId', 'offeringName'];
+    return [];
   }
 
   protected getDefaultRelations(): string[] {

@@ -6,6 +6,8 @@ import { UserEvent } from './entities/user-event.entity';
 import { RedisModule } from 'src/shared/redis/redis.module';
 import { UserEventReminderModule } from '../user_event_reminder/user_event_reminder.module';
 import { UserEventOfferingModule } from '../user_event_offering/user_event_offering.module';
+import { UserModule } from '../user/user.module';
+import { RitualModule } from '../ritual/ritual.module';
 
 @Module({
   imports: [
@@ -13,6 +15,8 @@ import { UserEventOfferingModule } from '../user_event_offering/user_event_offer
     RedisModule,
     UserEventReminderModule,
     UserEventOfferingModule,
+    UserModule,
+    RitualModule
   ],
   controllers: [UserEventController],
   providers: [UserEventService],
