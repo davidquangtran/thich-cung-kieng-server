@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PayOS, Webhook, WebhookData } from '@payos/node';
+import { PayOS, WebhookData } from '@payos/node';
 import { CheckoutRequest } from './dto/payos-payment-request.dto';
 import { CheckoutResponse } from './dto/payos-payment-response.dto';
 
@@ -50,6 +50,10 @@ export class PayosService {
       this.logger.log(
         `Payment link created successfully: ${result.checkoutUrl}`,
       );
+      
+      // Debug log to see actual PayOS response structure
+      this.logger.debug('PayOS API Response:', JSON.stringify(result, null, 2));
+      
       return result;
     } catch (error) {
       this.logger.error(

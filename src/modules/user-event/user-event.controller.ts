@@ -38,12 +38,15 @@ export class UserEventController {
   })
   async create(@Body() body: CreateUserEventWithRelationshipDto) {
     const { userEvent, relations } = body;
+    console.log('Creating user event with data:', body);
     if (relations && Object.keys(relations).length > 0) {
+      console.log('Creating with relations:', relations);
       return await this.userEventService.createWithRelations(
         userEvent,
         relations,
       );
     } else {
+      console.log('Creating without relations');
       return await this.userEventService.create(userEvent);
     }
   }
@@ -71,13 +74,16 @@ export class UserEventController {
     @Body() body: UpdateUserEventWithRelationshipDto,
   ) {
     const { userEvent, relations } = body;
+    console.log('Updating user event with data:', body);
     if (relations && Object.keys(relations).length > 0) {
+      console.log('Updating with relations:', relations);
       return this.userEventService.updateWithRelations(
         id,
         userEvent as UpdateUserEventDto,
         relations,
       );
     } else {
+      console.log('Updating without relations');
       return this.userEventService.update(id, userEvent as UpdateUserEventDto);
     }
   }
