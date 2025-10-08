@@ -132,51 +132,34 @@ export class PayosIntegrationService {
           `Found existing pending payment for user: ${user.email}, plan: ${plan.name}`,
         );
 
+        // PayOS getPaymentInfo doesn't return checkoutUrl/qrCode for existing payments
+        // So we need to cancel the old one and create new payment
+        this.logger.log('Cancelling existing payment and creating new one...');
+        
         try {
-          // Get existing payment link info from PayOS
+          // Cancel the old pending payment in PayOS
           const existingOrderCode = parseInt(existingPendingPayment.payment.transactionCode);
-          const existingPaymentInfo = await this.payosService.getPaymentInfo(existingOrderCode);
-
-          return {
-            orderCode: existingOrderCode,
-            paymentId: existingPendingPayment.payment.id,
-            userSubscriptionId: existingPendingPayment.userSubscription.id,
-            paymentLink: existingPaymentInfo.checkoutUrl,
-            qrCode: existingPaymentInfo.qrCode,
-            planInfo: {
-              id: plan.id,
-              name: plan.name,
-              price: plan.price,
-              durationDays: plan.durationDays,
-            },
-            userInfo: {
-              id: user.id,
-              email: user.email,
-            },
-            paymentInfo: existingPaymentInfo,
-          };
+          await this.payosService.cancelPaymentLink(existingOrderCode, 'Creating new payment link');
         } catch (error) {
-          this.logger.warn(
-            `Existing payment link may be expired or invalid for order ${existingPendingPayment.payment.transactionCode}: ${error.message}`,
-          );
-          
-          // Cancel the old pending payment and create a new one
-          await this.paymentService.update(existingPendingPayment.payment.id, {
-            status: PaymentStatus.CANCELLED,
-          });
-          
-          await this.paymentLogService.create({
-            paymentId: existingPendingPayment.payment.id,
-            status: PaymentStatus.CANCELLED,
-            description: 'Payment cancelled due to expired payment link',
-          });
-
-          await this.userSubscriptionService.update(existingPendingPayment.userSubscription.id, {
-            status: UserSubscriptionStatus.CANCELED,
-          });
-
-          this.logger.log('Old payment cancelled, proceeding to create new payment');
+          this.logger.warn(`Failed to cancel old PayOS payment link: ${error.message}`);
         }
+
+        // Cancel the old pending payment in our system
+        await this.paymentService.update(existingPendingPayment.payment.id, {
+          status: PaymentStatus.CANCELLED,
+        });
+        
+        await this.paymentLogService.create({
+          paymentId: existingPendingPayment.payment.id,
+          status: PaymentStatus.CANCELLED,
+          description: 'Payment cancelled to create new payment link',
+        });
+
+        await this.userSubscriptionService.update(existingPendingPayment.userSubscription.id, {
+          status: UserSubscriptionStatus.CANCELED,
+        });
+
+        this.logger.log('Old payment cancelled, proceeding to create new payment');
       }
 
       // Create UserSubscription first (PENDING status)

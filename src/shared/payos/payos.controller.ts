@@ -231,35 +231,6 @@ export class PayosController {
     }
   }
 
-  @Post('subscription/:paymentId/cancel')
-  @UseGuards(GlobalAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Hủy thanh toán subscription' })
-  @ApiParam({ name: 'paymentId', description: 'ID thanh toán' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Hủy thanh toán thành công',
-  })
-  async cancelSubscriptionPayment(
-    @Param('paymentId') paymentId: string,
-    @Body() body: { reason?: string } = {},
-  ) {
-    try {
-      const result =
-        await this.payosIntegrationService.cancelSubscriptionPayment(
-          paymentId,
-          body.reason,
-        );
-
-      return result;
-    } catch (error) {
-      this.logger.error(
-        `Failed to cancel subscription payment: ${error.message}`,
-      );
-      throw error;
-    }
-  }
-
   @Get('user/:userId/stats')
   @UseGuards(GlobalAuthGuard)
   @ApiBearerAuth()
@@ -279,54 +250,5 @@ export class PayosController {
       this.logger.error(`Failed to get user payment stats: ${error.message}`);
       throw error;
     }
-  }
-
-  @Get('webhook/test-format')
-  @Public()
-  @ApiOperation({ 
-    summary: 'Xem format webhook PayOS mẫu',
-    description: 'Endpoint để xem cấu trúc webhook mà PayOS sẽ gửi đến server'
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Trả về format webhook PayOS mẫu',
-  })
-  getWebhookTestFormat() {
-    return {
-      success: true,
-      message: 'PayOS Webhook Format Example',
-      data: {
-        webhookUrl: 'POST /api/v1/payos/webhook',
-        samplePayload: {
-          code: '00',
-          desc: 'success',
-          success: true,
-          data: {
-            orderCode: 1234567890,
-            amount: 299000,
-            description: 'Goi Premium',
-            accountNumber: '970422***',
-            reference: 'FT22348123456',
-            transactionDateTime: '2025-09-28T10:30:00Z',
-            currency: 'VND',
-            paymentLinkId: 'abc123def456',
-            code: '00', // "00" = success, other = failed
-            desc: 'success',
-            counterAccountBankId: '',
-            counterAccountBankName: '',
-            counterAccountName: '',
-            counterAccountNumber: '',
-            virtualAccountName: '',
-            virtualAccountNumber: ''
-          },
-          signature: 'webhook_signature_here'
-        },
-        headers: {
-          'x-payos-signature': 'sha256=signature_here',
-          'content-type': 'application/json'
-        },
-        note: 'PayOS sẽ gửi webhook này khi thanh toán hoàn tất'
-      }
-    };
   }
 }
