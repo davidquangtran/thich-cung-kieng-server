@@ -13,9 +13,17 @@ import { ChatSessionService } from './chat-session.service';
 import { CreateChatSessionDto } from './dto/create-chat-session.dto';
 import { FilterChatSessionDto } from './dto/filter-chat-session.dto';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
+import { ApiBearerAuth, ApiForbiddenResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
 
 @Public()
 @Controller('chat-session')
+@ApiBearerAuth()
+@ApiUnauthorizedResponse({
+  description: 'Unauthorized - Invalid or missing JWT token',
+})
+@ApiForbiddenResponse({
+  description: 'Forbidden - Insufficient permissions',
+})
 export class ChatSessionController {
   constructor(private readonly chatSessionService: ChatSessionService) {}
 
@@ -29,14 +37,14 @@ export class ChatSessionController {
     return this.chatSessionService.findAll(filter, [], []);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.chatSessionService.findOne(id);
-  }
-
   @Get('me')
   findByMe(@GetUser('id') id: string) {
     return this.chatSessionService.findOneByOptions({ userId: id });
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.chatSessionService.findOne(id);
   }
 
   @Delete(':id')

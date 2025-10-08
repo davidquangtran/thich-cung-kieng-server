@@ -10,6 +10,7 @@ import {
   ParseUUIDPipe,
   HttpStatus,
   Post,
+  Put,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -30,6 +31,8 @@ import { UserService } from './user.service';
 import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateProfileUserDto } from './dto/update-profile-user.dto';
+import { GetUser } from 'src/common/decorators/get-user.decorator';
 
 @ApiTags('Users')
 @ApiBearerAuth()
@@ -76,7 +79,6 @@ export class UserController {
   })
   @ApiOkResponse({
     description: 'Current user profile retrieved successfully',
-    // type: UserResponseDto,
   })
   @ApiNotFoundResponse({
     description: 'User not found',
@@ -90,32 +92,6 @@ export class UserController {
     }
     return user;
   }
-
-  // @Get('email/:email')
-  // @Roles(UserRole.ADMIN, UserRole.STAFF)
-  // @ApiOperation({
-  //   summary: 'Find user by email',
-  //   description:
-  //     'Find a specific user by their email address. Admin and Staff only.',
-  // })
-  // @ApiParam({
-  //   name: 'email',
-  //   description: 'User email address',
-  //   example: 'john.doe@example.com',
-  // })
-  // @ApiOkResponse({
-  //   description: 'User found successfully',
-  //   type: UserResponseDto,
-  // })
-  // @ApiNotFoundResponse({
-  //   description: 'User with specified email not found',
-  // })
-  // @ApiBadRequestResponse({
-  //   description: 'Invalid email format',
-  // })
-  // async findByEmail(@Param('email') email: string) {
-  //   return this.usersService.findUserByEmail(email);
-  // }
 
   @Get(':id')
   @Roles(UserRole.ADMIN)
@@ -173,41 +149,31 @@ export class UserController {
     return this.usersService.update(id, updateUserDto);
   }
 
-  // @Patch(':id/role')
-  // @Roles(UserRole.ADMIN)
-  // @ApiOperation({
-  //   summary: 'Update user role',
-  //   description: 'Update the role of a user. Admin only.',
-  // })
-  // @ApiParam({
-  //   name: 'id',
-  //   description: 'User unique identifier (UUID)',
-  //   example: 'c2adc0a6-7af6-4484-8ae0-72349d78e769',
-  // })
-  // @ApiBody({
-  //   description: 'Role update request body',
-  //   type: UpdateUserRoleDto,
-  // })
-  // @ApiOkResponse({
-  //   description: 'User role updated successfully',
-  //   type: UserResponseDto,
-  // })
-  // @ApiNotFoundResponse({
-  //   description: 'User not found',
-  // })
-  // @ApiBadRequestResponse({
-  //   description: 'Invalid UUID format or role (only STAFF is allowed)',
-  // })
-  // async updateRole(
-  //   @Param('id', ParseUUIDPipe) id: string,
-  //   @Body() updateRoleDto: UpdateUserRoleDto,
-  // ): Promise<UserResponseDto> {
-  //   return await this.usersService.updateUserField(
-  //     id,
-  //     'role',
-  //     updateRoleDto.role,
-  //   );
-  // }
+  @Put('profile')
+  @ApiOperation({
+    summary: 'Update user information',
+    description: 'Update user profile information. Admin only.',
+  })
+  @ApiBody({ type: UpdateProfileUserDto })
+  @ApiOkResponse({
+    description: 'User updated successfully',
+  })
+  @ApiNotFoundResponse({
+    description: 'User not found',
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid input data or UUID format',
+  })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: 'Email already exists',
+  })
+  async updateProfile(
+    @GetUser('id') id: string,
+    @Body() updateUserDto: UpdateProfileUserDto,
+  ) {
+    return this.usersService.update(id, updateUserDto);
+  }
 
   @Delete(':id')
   @Roles(UserRole.ADMIN)

@@ -8,20 +8,24 @@ import {
   Query,
   Put,
 } from '@nestjs/common';
-import { Public } from 'src/common/decorators/public.decorator';
 import { UserEventService } from './user-event.service';
 import { UpdateUserEventDto } from './dto/update-user-event.dto';
-import { BaseFilterDto } from 'src/common/base/dto/base-filter.dto';
 import { CreateUserEventWithRelationshipDto } from './dto/create-user-event-with-relationship.dto';
 import { UpdateUserEventWithRelationshipDto } from './dto/update-user-event-with-relationship.dto';
-import {
-  ApiBody,
-  ApiOperation,
-  ApiResponse,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiForbiddenResponse, ApiOperation, ApiResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { GetUser } from 'src/common/decorators/get-user.decorator';
+import { FilterUserEvent } from './dto/filter-user-event.dto';
+import { User } from '../user/entities/user.entity';
+import { UserRole } from 'src/common/enums/user.enum';
 
-@Public()
 @Controller('user-event')
+@ApiBearerAuth()
+@ApiUnauthorizedResponse({
+  description: 'Unauthorized - Invalid or missing JWT token',
+})
+@ApiForbiddenResponse({
+  description: 'Forbidden - Insufficient permissions',
+})
 export class UserEventController {
   constructor(private readonly userEventService: UserEventService) {}
 
@@ -32,23 +36,30 @@ export class UserEventController {
     status: 201,
     description: 'User event with relations created successfully',
   })
-  create(@Body() body: CreateUserEventWithRelationshipDto) {
+  async create(@Body() body: CreateUserEventWithRelationshipDto) {
     const { userEvent, relations } = body;
     if (relations && Object.keys(relations).length > 0) {
-      return this.userEventService.createWithRelations(userEvent, relations);
+      return await this.userEventService.createWithRelations(
+        userEvent,
+        relations,
+      );
     } else {
-      return this.userEventService.create(userEvent);
+      return await this.userEventService.create(userEvent);
     }
   }
 
   @Get()
-  findAll(@Query() filter: BaseFilterDto) {
-    return this.userEventService.findAll(filter, [], []);
+  async findAll(@Query() filter: FilterUserEvent, @GetUser() user: User) {
+    if(user.role !== UserRole.ADMIN) {
+      // Non-admin users can only see their own events
+      filter.userId = user.id;
+    }
+    return await this.userEventService.findAll(filter, [], []);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userEventService.findOne(id, ['reminders', 'offerings']);
+  async findOne(@Param('id') id: string) {
+    return await this.userEventService.findOne(id, ['reminders', 'offerings']);
   }
 
   @Put(':id')
