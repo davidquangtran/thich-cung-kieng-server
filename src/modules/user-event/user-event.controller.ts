@@ -7,10 +7,7 @@ import {
   Delete,
   Query,
   Put,
-  BadRequestException,
-  Req,
 } from '@nestjs/common';
-import { Public } from 'src/common/decorators/public.decorator';
 import { UserEventService } from './user-event.service';
 import { UpdateUserEventDto } from './dto/update-user-event.dto';
 import { CreateUserEventWithRelationshipDto } from './dto/create-user-event-with-relationship.dto';
@@ -19,6 +16,7 @@ import { ApiBearerAuth, ApiBody, ApiForbiddenResponse, ApiOperation, ApiResponse
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { FilterUserEvent } from './dto/filter-user-event.dto';
 import { User } from '../user/entities/user.entity';
+import { UserRole } from 'src/common/enums/user.enum';
 
 @Controller('user-event')
 @ApiBearerAuth()
@@ -52,7 +50,7 @@ export class UserEventController {
 
   @Get()
   async findAll(@Query() filter: FilterUserEvent, @GetUser() user: User) {
-    if(user.role !== 'admin') {
+    if(user.role !== UserRole.ADMIN) {
       // Non-admin users can only see their own events
       filter.userId = user.id;
     }
