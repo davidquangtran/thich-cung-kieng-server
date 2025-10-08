@@ -52,6 +52,43 @@ export class PayosIntegrationService {
   }
 
   /**
+   * Find existing pending payment for user and plan
+   */
+  private async findPendingPaymentForPlan(userId: string, planId: string) {
+    try {
+      // Get all payments for the user with pending status
+      const payments = await this.paymentService.findAll(
+        { page: 1, limit: 100 },
+        ['userSubscription', 'userSubscription.subscriptionPlan'],
+        [],
+      );
+
+      // Find pending payment for this user and plan
+      const pendingPayment = payments?.data?.find(
+        (payment) =>
+          payment.userId === userId &&
+          payment.status === PaymentStatus.PENDING &&
+          payment.provider === PaymentProvider.PAYOS &&
+          payment.userSubscription?.subscriptionPlanId === planId,
+      );
+
+      if (pendingPayment) {
+        return {
+          payment: pendingPayment,
+          userSubscription: pendingPayment.userSubscription,
+        };
+      }
+
+      return null;
+    } catch (error) {
+      this.logger.error(
+        `Error finding pending payment for user ${userId} and plan ${planId}: ${error.message}`,
+      );
+      return null;
+    }
+  }
+
+  /**
    * Create subscription payment with business context
    */
   async createSubscriptionPayment(
@@ -86,6 +123,61 @@ export class PayosIntegrationService {
       this.logger.log(
         `Creating subscription payment for user: ${user.email}, plan: ${plan.name}`,
       );
+
+      // Check if user already has a pending payment for this plan
+      const existingPendingPayment = await this.findPendingPaymentForPlan(userId, planId);
+      
+      if (existingPendingPayment) {
+        this.logger.log(
+          `Found existing pending payment for user: ${user.email}, plan: ${plan.name}`,
+        );
+
+        try {
+          // Get existing payment link info from PayOS
+          const existingOrderCode = parseInt(existingPendingPayment.payment.transactionCode);
+          const existingPaymentInfo = await this.payosService.getPaymentInfo(existingOrderCode);
+
+          return {
+            orderCode: existingOrderCode,
+            paymentId: existingPendingPayment.payment.id,
+            userSubscriptionId: existingPendingPayment.userSubscription.id,
+            paymentLink: existingPaymentInfo.checkoutUrl,
+            qrCode: existingPaymentInfo.qrCode,
+            planInfo: {
+              id: plan.id,
+              name: plan.name,
+              price: plan.price,
+              durationDays: plan.durationDays,
+            },
+            userInfo: {
+              id: user.id,
+              email: user.email,
+            },
+            paymentInfo: existingPaymentInfo,
+          };
+        } catch (error) {
+          this.logger.warn(
+            `Existing payment link may be expired or invalid for order ${existingPendingPayment.payment.transactionCode}: ${error.message}`,
+          );
+          
+          // Cancel the old pending payment and create a new one
+          await this.paymentService.update(existingPendingPayment.payment.id, {
+            status: PaymentStatus.CANCELLED,
+          });
+          
+          await this.paymentLogService.create({
+            paymentId: existingPendingPayment.payment.id,
+            status: PaymentStatus.CANCELLED,
+            description: 'Payment cancelled due to expired payment link',
+          });
+
+          await this.userSubscriptionService.update(existingPendingPayment.userSubscription.id, {
+            status: UserSubscriptionStatus.CANCELED,
+          });
+
+          this.logger.log('Old payment cancelled, proceeding to create new payment');
+        }
+      }
 
       // Create UserSubscription first (PENDING status)
       const userSubscription = await this.userSubscriptionService.create({
