@@ -16,7 +16,7 @@ async function bootstrap() {
       callback: (err: Error | null, allow?: boolean) => void,
     ) => {
       const allowedOrigins = [
-        configService.get<string>('FRONTEND_URL') || 'http://localhost:3000',
+        configService.get<string>('server.clientUrl') || 'http://localhost:3000',
         'http://localhost:3000',
         'http://localhost:5000',
       ];
