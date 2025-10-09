@@ -117,6 +117,22 @@ export class PayosIntegrationService {
     }
   }
 
+  private async deActivateExistingSubscriptions(userId: string) {
+    try {
+      // Get user's active subscriptions
+      const subscriptions = await this.userSubscriptionService.findAllByOptions({ userId, status: UserSubscriptionStatus.ACTIVE });
+      if (subscriptions && subscriptions.length > 0) {
+        for (const sub of subscriptions) {
+          await this.userSubscriptionService.update(sub.id, { status: UserSubscriptionStatus.CANCELED });
+        }
+      }
+    } catch (error) {
+      this.logger.error(
+        `Error deactivating existing subscriptions for user ${userId}: ${error.message}`,
+      );
+    }
+  }
+
   /**
    * Create subscription payment with business context
    */
@@ -189,6 +205,8 @@ export class PayosIntegrationService {
         await this.paymentService.update(existingPendingPayment.payment.id, {
           status: PaymentStatus.CANCELLED,
         });
+
+        await this.deActivateExistingSubscriptions(userId);
         
         await this.paymentLogService.create({
           paymentId: existingPendingPayment.payment.id,
