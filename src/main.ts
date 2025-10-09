@@ -16,9 +16,9 @@ async function bootstrap() {
       callback: (err: Error | null, allow?: boolean) => void,
     ) => {
       const allowedOrigins = [
-        configService.get<string>('server.clientUrl') || 'http://localhost:3000',
+        ...(configService.get<string>('server.clientUrl')?.split(',') || ['http://localhost:3000']),
         'http://localhost:5000',
-      ];
+      ].map(url => url.trim());
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {

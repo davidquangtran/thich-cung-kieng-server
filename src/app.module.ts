@@ -37,6 +37,7 @@ import { RequestContextInterceptor } from './common/interceptors/request-context
 import { PayosModule } from './shared/payos/payos.module';
 import { RitualTrayModule } from './modules/ritual-tray/ritual-tray.module';
 import { AdaptersModule } from './modules/adapters/adapters.module';
+import { FileUploadModule } from './modules/file-upload/file-upload.module';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { AdaptersModule } from './modules/adapters/adapters.module';
     UserFavoriteRitualModule,
     PayosModule,
     AdaptersModule,
+    FileUploadModule,
   ],
   controllers: [],
   providers: [
