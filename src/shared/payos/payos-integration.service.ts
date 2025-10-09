@@ -292,9 +292,20 @@ export class PayosIntegrationService {
         return;
       }
 
+      // *** IDEMPOTENCY CHECK: Skip if payment already processed ***
+      if (payment.status === PaymentStatus.COMPLETED) {
+        this.logger.log(`Payment ${orderCode} already completed, skipping webhook processing`);
+        return;
+      }
+
+      if (payment.status === PaymentStatus.FAILED) {
+        this.logger.log(`Payment ${orderCode} already failed, skipping webhook processing`);
+        return;
+      }
+
       if (webhookData.code === '00') {
         // Success
-        this.logger.log(`Subscription payment successful: ${orderCode}`);
+        this.logger.log(`Processing subscription payment success: ${orderCode}`);
 
         // Update payment status to COMPLETED
         await this.paymentService.update(payment.id, {
