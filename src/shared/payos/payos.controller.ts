@@ -258,4 +258,57 @@ export class PayosController {
       throw error;
     }
   }
+
+  @Post('subscription/:paymentId/cancel')
+  @UseGuards(GlobalAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Hủy thanh toán subscription đang pending' })
+  @ApiParam({ name: 'paymentId', description: 'ID thanh toán cần hủy' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Hủy thanh toán thành công và khôi phục subscription cũ',
+  })
+  async cancelSubscriptionPayment(
+    @Param('paymentId') paymentId: string,
+    @Body() body?: { reason?: string }
+  ) {
+    try {
+      const result = await this.payosIntegrationService.cancelSubscriptionPayment(
+        paymentId,
+        body?.reason || 'Payment cancelled by user'
+      );
+
+      return {
+        success: true,
+        message: 'Payment cancelled successfully and previous subscription restored',
+        data: result,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to cancel subscription payment: ${error.message}`);
+      throw error;
+    }
+  }
+
+  @Post('admin/handle-timeouts')
+  @UseGuards(GlobalAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Xử lý timeout cho các payment pending quá lâu (Admin only)' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Xử lý timeout thành công',
+  })
+  async handlePendingPaymentTimeouts() {
+    try {
+      const result = await this.payosIntegrationService.handlePendingPaymentTimeouts();
+
+      return {
+        success: true,
+        message: `Processed ${result.processedCount} timed out payments`,
+        data: result,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to handle pending payment timeouts: ${error.message}`);
+      throw error;
+    }
+  }
 }
