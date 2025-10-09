@@ -60,7 +60,7 @@ export class PayosIntegrationService {
       const payments = await this.paymentService.findAll(
         { page: 1, limit: 100 },
         ['userSubscription', 'userSubscription.subscriptionPlan'],
-        [],
+        ['id'],
       );
 
       // Find pending payment for this user and plan
@@ -83,6 +83,35 @@ export class PayosIntegrationService {
     } catch (error) {
       this.logger.error(
         `Error finding pending payment for user ${userId} and plan ${planId}: ${error.message}`,
+      );
+      return null;
+    }
+  }
+
+  /**
+   * Check if user already has active subscription for the same plan
+   */
+  private async checkActiveSubscriptionForPlan(userId: string, planId: string) {
+    try {
+      // Get user's active subscriptions
+      const subscriptions = await this.userSubscriptionService.findAll(
+        { page: 1, limit: 10 },
+        ['subscriptionPlan'],
+        ['id'],
+      );
+
+      // Find active subscription for this user and plan
+      const activeSubscription = subscriptions?.data?.find(
+        (subscription) =>
+          subscription.userId === userId &&
+          subscription.status === UserSubscriptionStatus.ACTIVE &&
+          subscription.subscriptionPlanId === planId,
+      );
+
+      return activeSubscription || null;
+    } catch (error) {
+      this.logger.error(
+        `Error checking active subscription for user ${userId} and plan ${planId}: ${error.message}`,
       );
       return null;
     }
@@ -123,6 +152,18 @@ export class PayosIntegrationService {
       this.logger.log(
         `Creating subscription payment for user: ${user.email}, plan: ${plan.name}`,
       );
+
+      // Check if user already has active subscription for this plan
+      const activeSubscription = await this.checkActiveSubscriptionForPlan(userId, planId);
+      
+      if (activeSubscription) {
+        this.logger.warn(
+          `User ${user.email} already has active subscription for plan: ${plan.name}`,
+        );
+        throw new BadRequestException(
+          `You already have an active subscription for the ${plan.name} plan. You cannot purchase the same plan again.`,
+        );
+      }
 
       // Check if user already has a pending payment for this plan
       const existingPendingPayment = await this.findPendingPaymentForPlan(userId, planId);

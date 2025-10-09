@@ -15,6 +15,8 @@ import {
   ApiResponse,
   ApiParam,
   ApiBearerAuth,
+  ApiUnauthorizedResponse,
+  ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { PayosService } from './payos.service';
 import {
@@ -23,11 +25,17 @@ import {
 import { GlobalAuthGuard } from '../../common/guards/global-auth.guard';
 import { Public } from '../../common/decorators/public.decorator';
 import { PayosIntegrationService } from './payos-integration.service';
-import type { Webhook, WebhookData } from '@payos/node';
+import { GetUser } from 'src/common/decorators/get-user.decorator';
 
 @ApiTags('PayOS - Subscription Payment')
 @Controller('payos')
-@Public()
+@ApiBearerAuth()
+@ApiUnauthorizedResponse({
+  description: 'Unauthorized - Invalid or missing JWT token',
+})
+@ApiForbiddenResponse({
+  description: 'Forbidden - Insufficient permissions',
+})
 export class PayosController {
   private readonly logger = new Logger(PayosController.name);
 
@@ -38,18 +46,17 @@ export class PayosController {
 
   @Post('subscription-payment')
   @UseGuards(GlobalAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Tạo thanh toán cho gói đăng ký' })
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'Tạo link thanh toán gói đăng ký thành công',
   })
-  async createSubscriptionPayment(@Body() dto: CreateSubscriptionPaymentDto) {
+  async createSubscriptionPayment(@Body() dto: CreateSubscriptionPaymentDto, @GetUser('id') id: string) {
     try {
       const result =
         await this.payosIntegrationService.createSubscriptionPayment(
           dto.planId,
-          dto.userId,
+          id,
           {
             returnUrl: dto.returnUrl,
             cancelUrl: dto.cancelUrl,

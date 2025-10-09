@@ -97,11 +97,6 @@ export class CreateSubscriptionPaymentDto {
   @IsString()
   planId: string;
 
-  @ApiProperty({ description: 'User ID', example: 'user_456' })
-  @IsNotEmpty()
-  @IsString()
-  userId: string;
-
   @ApiPropertyOptional({
     description: 'Return URL sau khi thanh toán thành công',
   })
