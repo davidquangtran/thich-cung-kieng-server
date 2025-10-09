@@ -293,6 +293,8 @@ export class PayosIntegrationService {
       }
 
       // *** IDEMPOTENCY CHECK: Skip if payment already processed ***
+      this.logger.log(`Payment ${orderCode} current status: ${payment.status}`);
+      
       if (payment.status === PaymentStatus.COMPLETED) {
         this.logger.log(`Payment ${orderCode} already completed, skipping webhook processing`);
         return;

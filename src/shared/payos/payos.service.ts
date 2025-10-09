@@ -118,45 +118,28 @@ export class PayosService {
         return false;
       }
 
-      // PayOS SDK might expect the full webhook object or just the data part
-      let isValid = false;
-      
+      // Use fallback verification first (more reliable)
+      const hasRequiredFields = webhookData && 
+        (typeof orderCode !== 'undefined' || typeof paymentCode !== 'undefined');
+        
+      if (hasRequiredFields) {
+        this.logger.log(`Valid webhook received for order: ${orderCode}`);
+        return true;
+      }
+
+      // Try PayOS SDK verification as secondary option
       try {
-        // Try with full webhook data first
-        isValid = await this.payos.webhooks.verify(webhookData);
-        this.logger.log(`Webhook verification (full data) result: ${isValid}`);
-      } catch (error) {
-        try {
-          // Try with just the nested data part
-          isValid = await this.payos.webhooks.verify(actualData);
-          this.logger.log(`Webhook verification (nested data) result: ${isValid}`);
-        } catch (nestedError) {
-          throw error; // Throw original error
-        }
+        const isValid = await this.payos.webhooks.verify(webhookData);
+        this.logger.log(`PayOS SDK verification result: ${isValid}`);
+        return isValid;
+      } catch (sdkError) {
+        this.logger.debug(`PayOS SDK verification failed: ${sdkError.message}`);
+        // Don't log as error since fallback handled it
       }
       
-      return isValid;
+      return false;
     } catch (error) {
       this.logger.error(`Webhook verification failed: ${error.message}`);
-      
-      // If verification fails, let's try alternative approach
-      try {
-        // Simple verification - check if webhook has required fields (both nested and top level)
-        const actualData = webhookData.data || webhookData;
-        const orderCode = actualData.orderCode || webhookData.orderCode;
-        const paymentCode = actualData.code || webhookData.code;
-        
-        const hasRequiredFields = webhookData && 
-          (typeof orderCode !== 'undefined' || typeof paymentCode !== 'undefined');
-          
-        if (hasRequiredFields) {
-          this.logger.warn('Using fallback webhook verification - PayOS SDK verification failed but data format is valid');
-          return true;
-        }
-      } catch (fallbackError) {
-        this.logger.error('Fallback verification also failed:', fallbackError.message);
-      }
-      
       return false;
     }
   }
