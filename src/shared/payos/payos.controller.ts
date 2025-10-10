@@ -19,9 +19,7 @@ import {
   ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { PayosService } from './payos.service';
-import {
-  CreateSubscriptionPaymentDto,
-} from './dto/payos.dto';
+import { CreateSubscriptionPaymentDto } from './dto/payos.dto';
 import { GlobalAuthGuard } from '../../common/guards/global-auth.guard';
 import { Public } from '../../common/decorators/public.decorator';
 import { PayosIntegrationService } from './payos-integration.service';
@@ -51,7 +49,10 @@ export class PayosController {
     status: HttpStatus.CREATED,
     description: 'Tạo link thanh toán gói đăng ký thành công',
   })
-  async createSubscriptionPayment(@Body() dto: CreateSubscriptionPaymentDto, @GetUser('id') id: string) {
+  async createSubscriptionPayment(
+    @Body() dto: CreateSubscriptionPaymentDto,
+    @GetUser('id') id: string,
+  ) {
     try {
       const result =
         await this.payosIntegrationService.createSubscriptionPayment(
@@ -104,10 +105,7 @@ export class PayosController {
     status: HttpStatus.OK,
     description: 'Webhook processed successfully',
   })
-  async handleWebhook(
-    @Body() webhookData: any,
-    @Headers() headers: any
-  ) {
+  async handleWebhook(@Body() webhookData: any, @Headers() headers: any) {
     try {
       // Log webhook data for debugging
       this.logger.debug('Webhook received:', {
@@ -121,7 +119,8 @@ export class PayosController {
         this.logger.warn('Empty webhook data received - likely a test request');
         return {
           success: true,
-          message: 'Webhook endpoint is working. Awaiting real PayOS webhook data.',
+          message:
+            'Webhook endpoint is working. Awaiting real PayOS webhook data.',
           note: 'This appears to be a test request. Real PayOS webhooks will contain payment data.',
         };
       }
@@ -133,7 +132,9 @@ export class PayosController {
 
       // Validate required PayOS webhook fields
       if (!orderCode && !paymentCode) {
-        this.logger.error('Invalid PayOS webhook format - missing required fields');
+        this.logger.error(
+          'Invalid PayOS webhook format - missing required fields',
+        );
         return {
           success: false,
           message: 'Invalid webhook format - missing required PayOS fields',
@@ -141,10 +142,11 @@ export class PayosController {
       }
 
       // Extract signature from headers or webhook body
-      const signature = headers['x-payos-signature'] || 
-                       headers['payos-signature'] || 
-                       headers['signature'] ||
-                       webhookData.signature;
+      const signature =
+        headers['x-payos-signature'] ||
+        headers['payos-signature'] ||
+        headers['signature'] ||
+        webhookData.signature;
 
       // For development, log the webhook structure
       this.logger.debug('PayOS webhook fields:', {
@@ -155,13 +157,16 @@ export class PayosController {
         webhookStructure: {
           hasTopLevelData: !!webhookData.data,
           topLevelFields: Object.keys(webhookData),
-          nestedFields: webhookData.data ? Object.keys(webhookData.data) : []
-        }
+          nestedFields: webhookData.data ? Object.keys(webhookData.data) : [],
+        },
       });
 
       // Verify webhook first
-      const isValid = await this.payosService.verifyWebhook(webhookData, signature);
-      
+      const isValid = await this.payosService.verifyWebhook(
+        webhookData,
+        signature,
+      );
+
       if (!isValid) {
         this.logger.warn('Invalid webhook signature received');
         return {
@@ -173,7 +178,10 @@ export class PayosController {
       // Process webhook through integration service
       // Pass the actual payment data (nested structure)
       const actualPaymentData = webhookData.data || webhookData;
-      const result = await this.payosIntegrationService.handlePaymentWebhook(actualPaymentData);
+      const result =
+        await this.payosIntegrationService.handlePaymentWebhook(
+          actualPaymentData,
+        );
 
       return {
         success: true,
@@ -259,47 +267,65 @@ export class PayosController {
     }
   }
 
-  @Post('subscription/:orderCode/cancel')
-  @UseGuards(GlobalAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Hủy thanh toán subscription đang pending' })
-  @ApiParam({ name: 'orderCode', description: 'Mã đơn hàng cần hủy' })
+  @Get('payment-cancel-callback/:orderCode')
+  @Public()
+  @ApiOperation({ summary: 'Handle payment cancellation callback from PayOS' })
+  @ApiParam({
+    name: 'orderCode',
+    description: 'Order code của giao dịch bị hủy',
+    type: String,
+  })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Hủy thanh toán thành công và khôi phục subscription cũ',
+    description: 'Payment cancellation handled successfully',
   })
-  async cancelSubscriptionPayment(
-    @Param('orderCode') orderCode: string,
-    @Body() body?: { reason?: string }
-  ) {
+  async handlePaymentCancelCallback(@Param('orderCode') orderCode: string) {
     try {
-      const result = await this.payosIntegrationService.cancelSubscriptionPayment(
-        orderCode,
-        body?.reason || 'Payment cancelled by user'
+      this.logger.log(
+        `[CANCEL CALLBACK] Received cancel callback for orderCode: ${orderCode}`,
       );
 
+      const result =
+        await this.payosIntegrationService.cancelSubscriptionPayment(
+          orderCode,
+          'Payment cancelled by user via PayOS interface',
+        );
+
+      // Return a user-friendly response that can be displayed
       return {
         success: true,
-        message: 'Payment cancelled successfully and previous subscription restored',
+        message:
+          'Payment has been cancelled successfully. Your previous subscription has been restored if applicable.',
         data: result,
+        redirect:
+          process.env.CLIENT_URL ||
+          'https://your-frontend-url.com/payment-cancelled',
       };
     } catch (error) {
-      this.logger.error(`Failed to cancel subscription payment: ${error.message}`);
-      throw error;
+      this.logger.error(`Failed to handle cancel callback: ${error.message}`);
+      return {
+        success: false,
+        message:
+          'Failed to process payment cancellation. Please contact support.',
+        error: error.message,
+      };
     }
   }
 
   @Post('admin/handle-timeouts')
   @UseGuards(GlobalAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Xử lý timeout cho các payment pending quá lâu (Admin only)' })
+  @ApiOperation({
+    summary: 'Xử lý timeout cho các payment pending quá lâu (Admin only)',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Xử lý timeout thành công',
   })
   async handlePendingPaymentTimeouts() {
     try {
-      const result = await this.payosIntegrationService.handlePendingPaymentTimeouts();
+      const result =
+        await this.payosIntegrationService.handlePendingPaymentTimeouts();
 
       return {
         success: true,
@@ -307,7 +333,9 @@ export class PayosController {
         data: result,
       };
     } catch (error) {
-      this.logger.error(`Failed to handle pending payment timeouts: ${error.message}`);
+      this.logger.error(
+        `Failed to handle pending payment timeouts: ${error.message}`,
+      );
       throw error;
     }
   }

@@ -42,12 +42,34 @@ export class PayosIntegrationService {
    * Get default return and cancel URLs
    */
   private getDefaultUrls() {
-    const baseUrl =
+    const clientUrl =
       this.configService.get<string>('server.clientUrl') ||
       'http://localhost:3000';
+
+    const serverUrl =
+      this.configService.get<string>('server.serverUrl') ||
+      'http://localhost:3000';
     return {
-      returnUrl: `${baseUrl}/payment/success`,
-      cancelUrl: `${baseUrl}/payment/cancel`,
+      returnUrl: `${clientUrl}/payment/success`,
+      cancelUrl: `${serverUrl}/api/payos/payment-cancel-callback`,
+    };
+  }
+
+  /**
+   * Build payment URLs with orderCode for cancel callback
+   */
+  private buildPaymentUrls(orderCode: number, options: { returnUrl?: string; cancelUrl?: string }) {
+    if (options.returnUrl && options.cancelUrl) {
+      return { 
+        returnUrl: options.returnUrl, 
+        cancelUrl: options.cancelUrl 
+      };
+    }
+    
+    const defaultUrls = this.getDefaultUrls();
+    return {
+      returnUrl: defaultUrls.returnUrl,
+      cancelUrl: `${defaultUrls.cancelUrl}/${orderCode}`,
     };
   }
 
@@ -155,7 +177,7 @@ export class PayosIntegrationService {
   private async restorePreviousSubscriptionAfterCancel(userId: string) {
     try {
       this.logger.log(
-        `Attempting to restore previous subscription for user: ${userId} after payment cancellation`,
+        `[RESTORE SUBSCRIPTION] Starting restoration process for user: ${userId} after payment cancellation`,
       );
 
       // Find the most recent subscription that is not pending (could be active, expired, or canceled)
@@ -165,11 +187,13 @@ export class PayosIntegrationService {
 
       if (!allUserSubscriptions || allUserSubscriptions.length === 0) {
         this.logger.log(
-          `No previous subscriptions found for user: ${userId}, assigning free plan`,
+          `[RESTORE SUBSCRIPTION] No previous subscriptions found for user: ${userId}, assigning free plan`,
         );
         await this.assignFreePlanToUser(userId);
         return;
       }
+
+      this.logger.log(`[RESTORE SUBSCRIPTION] Found ${allUserSubscriptions.length} total subscriptions for user: ${userId}`);
 
       // Filter out pending subscriptions and sort by creation date (most recent first)
       const eligibleSubscriptions = allUserSubscriptions
@@ -182,9 +206,11 @@ export class PayosIntegrationService {
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
         );
 
+      this.logger.log(`[RESTORE SUBSCRIPTION] Found ${eligibleSubscriptions.length} eligible subscriptions (non-pending, non-deleted) for user: ${userId}`);
+
       if (eligibleSubscriptions.length === 0) {
         this.logger.log(
-          `No eligible subscriptions to restore for user: ${userId}, assigning free plan`,
+          `[RESTORE SUBSCRIPTION] No eligible subscriptions to restore for user: ${userId}, assigning free plan`,
         );
         await this.assignFreePlanToUser(userId);
         return;
@@ -195,10 +221,15 @@ export class PayosIntegrationService {
       let subscriptionToRestore: any = null;
 
       for (const subscription of eligibleSubscriptions) {
+        this.logger.log(`[RESTORE SUBSCRIPTION] Checking subscription: ID=${subscription.id}, Status=${subscription.status}, EndDate=${subscription.endDate}`);
+        
         // Check if subscription is still valid (not expired)
         if (subscription.endDate && subscription.endDate > now) {
           subscriptionToRestore = subscription;
+          this.logger.log(`[RESTORE SUBSCRIPTION] Found valid subscription to restore: ID=${subscription.id}`);
           break;
+        } else {
+          this.logger.log(`[RESTORE SUBSCRIPTION] Subscription ${subscription.id} is expired (EndDate: ${subscription.endDate})`);
         }
       }
 
@@ -209,12 +240,12 @@ export class PayosIntegrationService {
         });
 
         this.logger.log(
-          `Successfully restored valid subscription ${subscriptionToRestore.id} for user: ${userId}`,
+          `[RESTORE SUBSCRIPTION] Successfully restored valid subscription ${subscriptionToRestore.id} for user: ${userId}`,
         );
       } else {
         // No valid subscription found, assign free plan
         this.logger.log(
-          `No valid (non-expired) subscriptions found for user: ${userId}, assigning free plan`,
+          `[RESTORE SUBSCRIPTION] No valid (non-expired) subscriptions found for user: ${userId}, assigning free plan`,
         );
         await this.assignFreePlanToUser(userId);
       }
@@ -260,10 +291,9 @@ export class PayosIntegrationService {
       }
 
       const orderCode = this.generateOrderCode();
-      const urls =
-        options.returnUrl && options.cancelUrl
-          ? { returnUrl: options.returnUrl, cancelUrl: options.cancelUrl }
-          : this.getDefaultUrls();
+      
+      // Build URLs with orderCode for cancel callback
+      const urls = this.buildPaymentUrls(orderCode, options);
 
       this.logger.log(
         `Creating subscription payment for user: ${user.email}, plan: ${plan.name}`,

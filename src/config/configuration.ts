@@ -4,6 +4,7 @@ export default () => ({
     port: process.env.PORT,
     env: process.env.NODE_ENV,
     clientUrl: process.env.CLIENT_URL,
+    serverUrl: process.env.SERVER_URL,
   },
 
   // Database configuration
