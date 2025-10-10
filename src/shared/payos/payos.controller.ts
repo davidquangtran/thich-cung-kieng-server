@@ -259,22 +259,22 @@ export class PayosController {
     }
   }
 
-  @Post('subscription/:paymentId/cancel')
+  @Post('subscription/:orderCode/cancel')
   @UseGuards(GlobalAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Hủy thanh toán subscription đang pending' })
-  @ApiParam({ name: 'paymentId', description: 'ID thanh toán cần hủy' })
+  @ApiParam({ name: 'orderCode', description: 'Mã đơn hàng cần hủy' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Hủy thanh toán thành công và khôi phục subscription cũ',
   })
   async cancelSubscriptionPayment(
-    @Param('paymentId') paymentId: string,
+    @Param('orderCode') orderCode: string,
     @Body() body?: { reason?: string }
   ) {
     try {
       const result = await this.payosIntegrationService.cancelSubscriptionPayment(
-        paymentId,
+        orderCode,
         body?.reason || 'Payment cancelled by user'
       );
 

@@ -112,95 +112,16 @@ export class PayosIntegrationService {
     }
   }
 
-  private async deActivateExistingSubscriptions(userId: string) {
-    try {
-      // Get user's active subscriptions
-      const subscriptions = await this.userSubscriptionService.findAllByOptions({ userId, status: UserSubscriptionStatus.ACTIVE });
-      if (subscriptions && subscriptions.length > 0) {
-        for (const sub of subscriptions) {
-          await this.userSubscriptionService.delete(sub.id);
-        }
-      }
-    } catch (error) {
-      this.logger.error(
-        `Error deactivating existing subscriptions for user ${userId}: ${error.message}`,
-      );
-    }
-  }
-
-  /**
-   * Restore user subscription after payment failure
-   * This method tries to restore the most recent valid subscription
-   * or assigns free plan if no valid subscription exists
-   */
-  private async restoreUserSubscriptionAfterFailure(userId: string) {
-    try {
-      this.logger.log(`Attempting to restore subscription for user: ${userId} after payment failure`);
-
-      // Find recently canceled subscriptions (within last hour) that might be valid to restore
-      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-      
-      // Get all subscriptions for this user and filter in memory
-      const allUserSubscriptions = await this.userSubscriptionService.findAllByOptions(
-        { userId, status: UserSubscriptionStatus.CANCELED }
-      );
-
-      const recentlyCanceledSubscriptions = (allUserSubscriptions || [])
-        .filter(sub => 
-          sub.updatedAt >= oneHourAgo &&
-          sub.endDate && sub.endDate > new Date() &&
-          !sub.deletedAt
-        )
-        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-
-      if (recentlyCanceledSubscriptions.length > 0) {
-        // Restore the most recently canceled subscription
-        const subscriptionToRestore = recentlyCanceledSubscriptions[0];
-        
-        await this.userSubscriptionService.update(subscriptionToRestore.id, {
-          status: UserSubscriptionStatus.ACTIVE,
-        });
-
-        this.logger.log(
-          `Successfully restored subscription ${subscriptionToRestore.id} for user: ${userId}`
-        );
-        return;
-      }
-
-      // If no valid subscription to restore, check if user has any subscription
-      const userSubscriptions = await this.userSubscriptionService.findAllByOptions({ userId });
-      
-      if (!userSubscriptions || userSubscriptions.length === 0) {
-        // User has no subscriptions, assign free plan
-        this.logger.log(`No subscriptions found for user: ${userId}, assigning free plan`);
-        await this.assignFreePlanToUser(userId);
-      } else {
-        this.logger.log(`User ${userId} has existing subscriptions, no restoration needed`);
-      }
-
-    } catch (error) {
-      this.logger.error(
-        `Failed to restore subscription for user ${userId}: ${error.message}`,
-      );
-      // If restoration fails, try to assign free plan as fallback
-      try {
-        await this.assignFreePlanToUser(userId);
-      } catch (fallbackError) {
-        this.logger.error(
-          `Failed to assign free plan as fallback for user ${userId}: ${fallbackError.message}`,
-        );
-      }
-    }
-  }
-
   /**
    * Assign free plan to user
    */
   private async assignFreePlanToUser(userId: string) {
     try {
       // Find free plan (assuming it has price = 0)
-      const freePlan = await this.subscriptionPlanService.findOneByOptions({ price: 0 });
-      
+      const freePlan = await this.subscriptionPlanService.findOneByOptions({
+        price: 0,
+      });
+
       if (freePlan) {
         const userSubscription = await this.userSubscriptionService.create({
           userId,
@@ -211,14 +132,104 @@ export class PayosIntegrationService {
           autoRenew: false,
         });
 
-        this.logger.log(`Assigned free plan ${freePlan.name} to user: ${userId}`);
+        this.logger.log(
+          `Assigned free plan ${freePlan.name} to user: ${userId}`,
+        );
         return userSubscription;
       } else {
         this.logger.warn(`No free plan found to assign to user: ${userId}`);
       }
     } catch (error) {
-      this.logger.error(`Failed to assign free plan to user ${userId}: ${error.message}`);
+      this.logger.error(
+        `Failed to assign free plan to user ${userId}: ${error.message}`,
+      );
       throw error;
+    }
+  }
+
+  /**
+   * Restore previous subscription after payment cancellation
+   * This method tries to restore the most recent valid subscription
+   * or assigns free plan if no valid subscription exists
+   */
+  private async restorePreviousSubscriptionAfterCancel(userId: string) {
+    try {
+      this.logger.log(
+        `Attempting to restore previous subscription for user: ${userId} after payment cancellation`,
+      );
+
+      // Find the most recent subscription that is not pending (could be active, expired, or canceled)
+      // We want to restore the subscription that was active before user tried to upgrade
+      const allUserSubscriptions =
+        await this.userSubscriptionService.findAllByOptions({ userId });
+
+      if (!allUserSubscriptions || allUserSubscriptions.length === 0) {
+        this.logger.log(
+          `No previous subscriptions found for user: ${userId}, assigning free plan`,
+        );
+        await this.assignFreePlanToUser(userId);
+        return;
+      }
+
+      // Filter out pending subscriptions and sort by creation date (most recent first)
+      const eligibleSubscriptions = allUserSubscriptions
+        .filter(
+          (sub) =>
+            sub.status !== UserSubscriptionStatus.PENDING && !sub.deletedAt,
+        )
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
+
+      if (eligibleSubscriptions.length === 0) {
+        this.logger.log(
+          `No eligible subscriptions to restore for user: ${userId}, assigning free plan`,
+        );
+        await this.assignFreePlanToUser(userId);
+        return;
+      }
+
+      // Find the most recent subscription that is still valid (not expired)
+      const now = new Date();
+      let subscriptionToRestore: any = null;
+
+      for (const subscription of eligibleSubscriptions) {
+        // Check if subscription is still valid (not expired)
+        if (subscription.endDate && subscription.endDate > now) {
+          subscriptionToRestore = subscription;
+          break;
+        }
+      }
+
+      if (subscriptionToRestore) {
+        // Restore the valid subscription
+        await this.userSubscriptionService.update(subscriptionToRestore.id, {
+          status: UserSubscriptionStatus.ACTIVE,
+        });
+
+        this.logger.log(
+          `Successfully restored valid subscription ${subscriptionToRestore.id} for user: ${userId}`,
+        );
+      } else {
+        // No valid subscription found, assign free plan
+        this.logger.log(
+          `No valid (non-expired) subscriptions found for user: ${userId}, assigning free plan`,
+        );
+        await this.assignFreePlanToUser(userId);
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to restore previous subscription for user ${userId}: ${error.message}`,
+      );
+      // If restoration fails, try to assign free plan as fallback
+      try {
+        await this.assignFreePlanToUser(userId);
+      } catch (fallbackError) {
+        this.logger.error(
+          `Failed to assign free plan as fallback for user ${userId}: ${fallbackError.message}`,
+        );
+      }
     }
   }
 
@@ -259,8 +270,11 @@ export class PayosIntegrationService {
       );
 
       // Check if user already has active subscription for this plan FIRST
-      const activeSubscription = await this.checkActiveSubscriptionForPlan(userId, planId);
-      
+      const activeSubscription = await this.checkActiveSubscriptionForPlan(
+        userId,
+        planId,
+      );
+
       if (activeSubscription) {
         this.logger.warn(
           `User ${user.email} already has active subscription for plan: ${plan.name}`,
@@ -270,22 +284,16 @@ export class PayosIntegrationService {
         );
       }
 
-      // IMPORTANT: Deactivate all other subscriptions for this user
-      // This ensures user only has one active subscription at a time
-      const deactivateResult = await this.userSubscriptionService.deactivateOtherSubscriptions(userId);
-      
-      if (deactivateResult.deactivatedCount > 0) {
-        this.logger.log(
-          `Deactivated ${deactivateResult.deactivatedCount} existing subscriptions for user: ${user.email}`,
-        );
-      }
-
-      // Store deactivated subscriptions info for potential restoration
-      const deactivatedSubscriptionIds = deactivateResult.deactivatedSubscriptions;
+      this.logger.log(
+        `User has no duplicate subscription for plan: ${plan.name}, proceeding with payment creation`,
+      );
 
       // Check if user already has a pending payment for this plan
-      const existingPendingPayment = await this.findPendingPaymentForPlan(userId, planId);
-      
+      const existingPendingPayment = await this.findPendingPaymentForPlan(
+        userId,
+        planId,
+      );
+
       if (existingPendingPayment) {
         this.logger.log(
           `Found existing pending payment for user: ${user.email}, plan: ${plan.name}`,
@@ -294,31 +302,43 @@ export class PayosIntegrationService {
         // PayOS getPaymentInfo doesn't return checkoutUrl/qrCode for existing payments
         // So we need to cancel the old one and create new payment
         this.logger.log('Cancelling existing payment and creating new one...');
-        
+
         try {
           // Cancel the old pending payment in PayOS
-          const existingOrderCode = parseInt(existingPendingPayment.payment.transactionCode);
-          await this.payosService.cancelPaymentLink(existingOrderCode, 'Creating new payment link');
+          const existingOrderCode = parseInt(
+            existingPendingPayment.payment.transactionCode,
+          );
+          await this.payosService.cancelPaymentLink(
+            existingOrderCode,
+            'Creating new payment link',
+          );
         } catch (error) {
-          this.logger.warn(`Failed to cancel old PayOS payment link: ${error.message}`);
+          this.logger.warn(
+            `Failed to cancel old PayOS payment link: ${error.message}`,
+          );
         }
 
         // Cancel the old pending payment in our system
         await this.paymentService.update(existingPendingPayment.payment.id, {
           status: PaymentStatus.CANCELLED,
         });
-        
+
         await this.paymentLogService.create({
           paymentId: existingPendingPayment.payment.id,
           status: PaymentStatus.CANCELLED,
           description: 'Payment cancelled to create new payment link',
         });
 
-        await this.userSubscriptionService.update(existingPendingPayment.userSubscription.id, {
-          status: UserSubscriptionStatus.CANCELED,
-        });
+        await this.userSubscriptionService.update(
+          existingPendingPayment.userSubscription.id,
+          {
+            status: UserSubscriptionStatus.CANCELED,
+          },
+        );
 
-        this.logger.log('Old payment cancelled, proceeding to create new payment');
+        this.logger.log(
+          'Old payment cancelled, proceeding to create new payment',
+        );
       }
 
       // Create UserSubscription first (PENDING status)
@@ -453,20 +473,26 @@ export class PayosIntegrationService {
 
       // *** IDEMPOTENCY CHECK: Skip if payment already processed ***
       this.logger.log(`Payment ${orderCode} current status: ${payment.status}`);
-      
+
       if (payment.status === PaymentStatus.COMPLETED) {
-        this.logger.log(`Payment ${orderCode} already completed, skipping webhook processing`);
+        this.logger.log(
+          `Payment ${orderCode} already completed, skipping webhook processing`,
+        );
         return;
       }
 
       if (payment.status === PaymentStatus.FAILED) {
-        this.logger.log(`Payment ${orderCode} already failed, skipping webhook processing`);
+        this.logger.log(
+          `Payment ${orderCode} already failed, skipping webhook processing`,
+        );
         return;
       }
 
       if (webhookData.code === '00') {
         // Success
-        this.logger.log(`Processing subscription payment success: ${orderCode}`);
+        this.logger.log(
+          `Processing subscription payment success: ${orderCode}`,
+        );
 
         // Update payment status to COMPLETED
         await this.paymentService.update(payment.id, {
@@ -481,13 +507,15 @@ export class PayosIntegrationService {
         });
 
         // Get the user subscription info to find userId
-        const userSubscription = await this.userSubscriptionService.findOne(payment.userSubscriptionId);
-        
+        const userSubscription = await this.userSubscriptionService.findOne(
+          payment.userSubscriptionId,
+        );
+
         if (userSubscription) {
           // Deactivate all other subscriptions for this user (excluding the current one)
           await this.userSubscriptionService.deactivateOtherSubscriptions(
-            userSubscription.userId, 
-            userSubscription.id
+            userSubscription.userId,
+            userSubscription.id,
           );
         }
 
@@ -502,6 +530,46 @@ export class PayosIntegrationService {
 
         // TODO: Send confirmation email
         // await this.mailService.sendSubscriptionConfirmation(userEmail);
+      } else if (
+        webhookData.code === '02' ||
+        webhookData.desc?.toLowerCase().includes('cancel')
+      ) {
+        // Payment cancelled by user or timeout
+        this.logger.log(
+          `Processing subscription payment cancellation: ${orderCode} - ${webhookData.desc}`,
+        );
+
+        // Update payment status to CANCELLED
+        await this.paymentService.update(payment.id, {
+          status: PaymentStatus.CANCELLED,
+        });
+
+        // Create payment log for cancellation
+        await this.paymentLogService.create({
+          paymentId: payment.id,
+          status: PaymentStatus.CANCELLED,
+          description: `Payment cancelled via PayOS. Reason: ${webhookData.desc}`,
+        });
+
+        // Cancel the user subscription that was pending
+        await this.userSubscriptionService.update(payment.userSubscriptionId, {
+          status: UserSubscriptionStatus.CANCELED,
+        });
+
+        // Get the user subscription info to find userId and restore previous subscription
+        const userSubscription = await this.userSubscriptionService.findOne(
+          payment.userSubscriptionId,
+        );
+
+        if (userSubscription) {
+          await this.restorePreviousSubscriptionAfterCancel(
+            userSubscription.userId,
+          );
+        }
+
+        this.logger.log(
+          `Payment cancelled - attempting to restore previous subscription for user`,
+        );
       } else {
         this.logger.warn(
           `Subscription payment failed: ${orderCode} - ${webhookData.desc}`,
@@ -524,15 +592,9 @@ export class PayosIntegrationService {
           status: UserSubscriptionStatus.CANCELED,
         });
 
-        // Get the user subscription info to find userId
-        const userSubscription = await this.userSubscriptionService.findOne(payment.userSubscriptionId);
-        
-        if (userSubscription) {
-          // Try to restore previously deactivated subscriptions
-          // Note: We don't have direct access to deactivatedSubscriptionIds from createSubscriptionPayment
-          // So we'll find recently canceled subscriptions and try to restore them
-          await this.restoreUserSubscriptionAfterFailure(userSubscription.userId);
-        }
+        this.logger.log(
+          `Payment failed - user subscription ${payment.userSubscriptionId} canceled. User's existing subscriptions remain active.`,
+        );
       }
     } catch (error) {
       this.logger.error(
@@ -702,14 +764,17 @@ export class PayosIntegrationService {
   }
 
   /**
-   * Cancel a pending payment
+   * Cancel a pending payment by orderCode
    */
-  async cancelSubscriptionPayment(paymentId: string, reason?: string) {
+  async cancelSubscriptionPayment(orderCode: string, reason?: string) {
     try {
-      const payment = await this.paymentService.findOne(paymentId);
+      // Find payment by transaction code (order code)
+      const payment = await this.paymentService.findOneByOptions({
+        transactionCode: orderCode,
+      });
 
       if (!payment) {
-        throw new NotFoundException(`Payment with ID ${paymentId} not found`);
+        throw new NotFoundException(`Payment with order code ${orderCode} not found`);
       }
 
       if (payment.status !== PaymentStatus.PENDING) {
@@ -718,12 +783,10 @@ export class PayosIntegrationService {
 
       // Try to cancel with PayOS if possible
       try {
-        if (payment.transactionCode) {
-          await this.payosService.cancelPaymentLink(
-            parseInt(payment.transactionCode),
-            reason,
-          );
-        }
+        await this.payosService.cancelPaymentLink(
+          parseInt(orderCode),
+          reason,
+        );
       } catch (error) {
         this.logger.warn(
           `Failed to cancel PayOS payment link: ${error.message}`,
@@ -732,13 +795,13 @@ export class PayosIntegrationService {
       }
 
       // Update payment status
-      const updatedPayment = await this.paymentService.update(paymentId, {
+      const updatedPayment = await this.paymentService.update(payment.id, {
         status: PaymentStatus.CANCELLED,
       });
 
       // Log the cancellation
       await this.paymentLogService.create({
-        paymentId,
+        paymentId: payment.id,
         status: PaymentStatus.CANCELLED,
         description: reason || 'Payment cancelled by user',
       });
@@ -749,13 +812,16 @@ export class PayosIntegrationService {
           status: UserSubscriptionStatus.CANCELED,
         });
 
-        // Get the user subscription info to find userId
+        // Get the user subscription info to find userId and restore previous subscription
         const userSubscription = await this.userSubscriptionService.findOne(payment.userSubscriptionId);
         
         if (userSubscription) {
-          // Try to restore previously deactivated subscriptions
-          await this.restoreUserSubscriptionAfterFailure(userSubscription.userId);
+          await this.restorePreviousSubscriptionAfterCancel(userSubscription.userId);
         }
+
+        this.logger.log(
+          `Payment cancelled - user subscription ${payment.userSubscriptionId} canceled and previous subscription restored.`
+        );
       }
 
       return updatedPayment;
@@ -827,13 +893,16 @@ export class PayosIntegrationService {
 
       // Find all pending payments that are older than threshold
       const allPayments = await this.paymentService.findAllByOptions({
-        status: PaymentStatus.PENDING
+        status: PaymentStatus.PENDING,
       });
 
-      const timedOutPayments = (allPayments || [])
-        .filter(payment => payment.createdAt < timeoutThreshold);
+      const timedOutPayments = (allPayments || []).filter(
+        (payment) => payment.createdAt < timeoutThreshold,
+      );
 
-      this.logger.log(`Found ${timedOutPayments.length} timed out payments to process`);
+      this.logger.log(
+        `Found ${timedOutPayments.length} timed out payments to process`,
+      );
 
       for (const payment of timedOutPayments) {
         try {
@@ -848,38 +917,42 @@ export class PayosIntegrationService {
           await this.paymentLogService.create({
             paymentId: payment.id,
             status: PaymentStatus.FAILED,
-            description: 'Payment timed out - no response received within 30 minutes',
+            description:
+              'Payment timed out - no response received within 30 minutes',
           });
 
-          // Cancel the associated user subscription and restore previous subscription
+          // Cancel the associated user subscription
           if (payment.userSubscriptionId) {
-            await this.userSubscriptionService.update(payment.userSubscriptionId, {
-              status: UserSubscriptionStatus.CANCELED,
-            });
+            await this.userSubscriptionService.update(
+              payment.userSubscriptionId,
+              {
+                status: UserSubscriptionStatus.CANCELED,
+              },
+            );
 
-            // Get the user subscription info to find userId
-            const userSubscription = await this.userSubscriptionService.findOne(payment.userSubscriptionId);
-            
-            if (userSubscription) {
-              // Try to restore previously deactivated subscriptions
-              await this.restoreUserSubscriptionAfterFailure(userSubscription.userId);
-            }
+            this.logger.log(
+              `Payment timed out - user subscription ${payment.userSubscriptionId} canceled. User's existing subscriptions remain active.`,
+            );
           }
 
-          this.logger.log(`Successfully processed timeout for payment: ${payment.id}`);
+          this.logger.log(
+            `Successfully processed timeout for payment: ${payment.id}`,
+          );
         } catch (error) {
           this.logger.error(
-            `Failed to process timeout for payment ${payment.id}: ${error.message}`
+            `Failed to process timeout for payment ${payment.id}: ${error.message}`,
           );
         }
       }
 
       return {
         processedCount: timedOutPayments.length,
-        timedOutPayments: timedOutPayments.map(p => p.id)
+        timedOutPayments: timedOutPayments.map((p) => p.id),
       };
     } catch (error) {
-      this.logger.error(`Failed to handle pending payment timeouts: ${error.message}`);
+      this.logger.error(
+        `Failed to handle pending payment timeouts: ${error.message}`,
+      );
       throw error;
     }
   }
