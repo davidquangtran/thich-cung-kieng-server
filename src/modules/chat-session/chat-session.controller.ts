@@ -13,7 +13,11 @@ import { ChatSessionService } from './chat-session.service';
 import { CreateChatSessionDto } from './dto/create-chat-session.dto';
 import { FilterChatSessionDto } from './dto/filter-chat-session.dto';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
-import { ApiBearerAuth, ApiForbiddenResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiForbiddenResponse,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 
 @Public()
 @Controller('chat-session')
@@ -37,14 +41,9 @@ export class ChatSessionController {
     return this.chatSessionService.findAll(filter, [], []);
   }
 
-  @Get('me')
-  findByMe(@GetUser('id') id: string) {
-    return this.chatSessionService.findOneByOptions({ userId: id });
-  }
-
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.chatSessionService.findOne(id);
+    return this.chatSessionService.findOne(id, ['messages']);
   }
 
   @Delete(':id')
