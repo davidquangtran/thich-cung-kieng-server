@@ -67,7 +67,7 @@ export class UserController {
     description: 'List of users retrieved successfully',
   })
   async findAll(@Query() filter: BaseFilterDto) {
-    return this.usersService.findAll(filter, [], []);
+    return this.usersService.findAll(filter, ['userSubscriptions', 'userSubscriptions.subscriptionPlan'], []);
   }
 
   @Get('me')
