@@ -46,12 +46,7 @@ export class PaymentController {
   @ApiOperation({ summary: 'Get payment trends for charts (Admin only)' })
   async getPaymentTrends(@Query('days') days?: string) {
     const daysNumber = days ? parseInt(days) : 30;
-    const trends = await this.paymentService.getPaymentTrends(daysNumber);
-    return {
-      statusCode: 200,
-      message: 'Payment trends retrieved successfully',
-      data: trends,
-    };
+    return this.paymentService.getPaymentTrends(daysNumber);
   }
 
   @Get(':id')

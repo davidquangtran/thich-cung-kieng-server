@@ -57,7 +57,10 @@ export class AdminStatsController {
 
     // Get total revenue from completed payments
     const completedPayments = await this.paymentRepository.find({
-      where: { status: PaymentStatus.COMPLETED },
+      where: { 
+        status: PaymentStatus.COMPLETED,
+        deletedAt: null as any,
+      },
     });
     const totalRevenue = completedPayments.reduce(
       (sum, payment) => sum + Number(payment.totalAmount),
@@ -87,6 +90,7 @@ export class AdminStatsController {
       where: {
         createdAt: MoreThanOrEqual(sevenDaysAgo) as any,
         status: PaymentStatus.COMPLETED,
+        deletedAt: null as any,
       },
       order: { createdAt: 'ASC' },
     });
