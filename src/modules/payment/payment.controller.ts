@@ -36,7 +36,12 @@ export class PaymentController {
   async findAll(@Query() filter: BaseFilterDto) {
     return this.paymentService.findAll(
       filter,
-      ['user', 'userSubscription', 'userSubscription.subscriptionPlan'],
+      [
+        'user',
+        'userSubscription',
+        'userSubscription.user',
+        'userSubscription.subscriptionPlan',
+      ],
       [],
     );
   }
