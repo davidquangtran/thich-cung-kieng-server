@@ -7,9 +7,11 @@ import {
 } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from 'src/common/enums/user.enum';
+import { PaymentStatus } from 'src/common/enums/payment.enum';
+import { UserSubscriptionStatus } from 'src/common/enums/user-subscription.enum';
 import { UserService } from './user.service';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, MoreThanOrEqual } from 'typeorm';
 import { User } from './entities/user.entity';
 import { Payment } from '../payment/entities/payment.entity';
 import { UserSubscription } from '../user-subscription/entities/user-subscription.entity';
@@ -49,22 +51,22 @@ export class AdminStatsController {
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const newUsersThisMonth = await this.userRepository.count({
       where: {
-        createdAt: firstDayOfMonth as any,
+        createdAt: MoreThanOrEqual(firstDayOfMonth) as any,
       },
     });
 
     // Get total revenue from completed payments
     const completedPayments = await this.paymentRepository.find({
-      where: { status: 'completed' },
+      where: { status: PaymentStatus.COMPLETED },
     });
     const totalRevenue = completedPayments.reduce(
-      (sum, payment) => sum + parseFloat(payment.totalAmount),
+      (sum, payment) => sum + Number(payment.totalAmount),
       0,
     );
 
     // Get active subscriptions
     const activeSubscriptions = await this.subscriptionRepository.count({
-      where: { status: 'active' },
+      where: { status: UserSubscriptionStatus.ACTIVE },
     });
 
     // Get total rituals
@@ -83,8 +85,8 @@ export class AdminStatsController {
 
     const recentPayments = await this.paymentRepository.find({
       where: {
-        createdAt: sevenDaysAgo as any,
-        status: 'completed',
+        createdAt: MoreThanOrEqual(sevenDaysAgo) as any,
+        status: PaymentStatus.COMPLETED,
       },
       order: { createdAt: 'ASC' },
     });
@@ -95,7 +97,7 @@ export class AdminStatsController {
       if (!acc[date]) {
         acc[date] = { amount: 0, count: 0 };
       }
-      acc[date].amount += parseFloat(payment.totalAmount);
+      acc[date].amount += Number(payment.totalAmount);
       acc[date].count += 1;
       return acc;
     }, {} as Record<string, { amount: number; count: number }>);
@@ -114,7 +116,9 @@ export class AdminStatsController {
       .leftJoin('subscription.subscriptionPlan', 'plan')
       .select('plan.name', 'planName')
       .addSelect('COUNT(subscription.id)', 'count')
-      .where('subscription.status = :status', { status: 'active' })
+      .where('subscription.status = :status', {
+        status: UserSubscriptionStatus.ACTIVE,
+      })
       .groupBy('plan.name')
       .getRawMany();
 
