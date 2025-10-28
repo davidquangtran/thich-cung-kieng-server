@@ -23,13 +23,13 @@ import { Ritual } from '../ritual/entities/ritual.entity';
 export class AdminStatsController {
   constructor(
     private readonly userService: UserService,
-    @InjectRepository(User)
+    @InjectRepository(User, 'postgresql')
     private readonly userRepository: Repository<User>,
-    @InjectRepository(Payment)
+    @InjectRepository(Payment, 'postgresql')
     private readonly paymentRepository: Repository<Payment>,
-    @InjectRepository(UserSubscription)
+    @InjectRepository(UserSubscription, 'postgresql')
     private readonly subscriptionRepository: Repository<UserSubscription>,
-    @InjectRepository(Ritual)
+    @InjectRepository(Ritual, 'postgresql')
     private readonly ritualRepository: Repository<Ritual>,
   ) {}
 
