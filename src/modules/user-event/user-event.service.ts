@@ -90,7 +90,9 @@ export class UserEventService extends BaseService<UserEvent> {
     updateDto: UpdateUserEventDto,
   ): Promise<void> {
     if (!updateDto) {
-      throw new BadRequestException('UpdateUserEventDto cannot be null or undefined');
+      throw new BadRequestException(
+        'UpdateUserEventDto cannot be null or undefined',
+      );
     }
     console.log(updateDto);
     if (updateDto.userId) {
@@ -100,7 +102,9 @@ export class UserEventService extends BaseService<UserEvent> {
       }
     }
     if (updateDto.ritualId) {
-      const isRitualExist = await this.ritualService.findOne(updateDto.ritualId);
+      const isRitualExist = await this.ritualService.findOne(
+        updateDto.ritualId,
+      );
       if (!isRitualExist) {
         throw new BadRequestException('Ritual does not exist');
       }
@@ -171,7 +175,7 @@ export class UserEventService extends BaseService<UserEvent> {
     relationData?: Record<string, any>,
   ): Promise<void> {
     const promises: Promise<any>[] = [];
-    
+
     // Handle eventReminders - check if field exists in relationData
     if (relationData && 'eventReminders' in relationData) {
       const existingReminders =
@@ -259,7 +263,7 @@ export class UserEventService extends BaseService<UserEvent> {
           (existingOfferings ?? []).map((o) => [o.id, o]),
         );
         const inputMap = new Map(inputOfferings.map((r) => [r.id, r]));
-        
+
         // Find what to add, update, and remove
         const toAdd = inputOfferings.filter(
           (input) => !input.id || !existingMap.has(input.id),
@@ -277,7 +281,7 @@ export class UserEventService extends BaseService<UserEvent> {
               existing.note !== input.note)
           );
         });
-        
+
         // Execute changes
         for (const offering of toAdd) {
           promises.push(
