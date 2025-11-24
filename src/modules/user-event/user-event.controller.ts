@@ -121,7 +121,7 @@ export class UserEventController {
     @Param('id') id: string,
     @Req() req: Request,
   ) {
-    const googleRefreshToken = req.cookies?.googleRefreshToken;
+    const googleRefreshToken = req.cookies['googleRefreshToken'];
     
     if (!googleRefreshToken) {
       throw new UnauthorizedException('Google refresh token not found in cookies');
