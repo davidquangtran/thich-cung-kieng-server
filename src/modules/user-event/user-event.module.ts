@@ -17,7 +17,7 @@ import { GoogleCalendarService } from '../auth/google/services/google-calendar.s
     UserEventReminderModule,
     UserEventOfferingModule,
     UserModule,
-    RitualModule
+    RitualModule,
   ],
   controllers: [UserEventController],
   providers: [UserEventService, GoogleCalendarService],
