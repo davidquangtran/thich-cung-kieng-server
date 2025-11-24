@@ -17,6 +17,7 @@ import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { FilterUserEvent } from './dto/filter-user-event.dto';
 import { User } from '../user/entities/user.entity';
 import { UserRole } from 'src/common/enums/user.enum';
+import { SyncToCalendarDto } from './dto/sync-to-calendar.dto';
 
 @Controller('user-event')
 @ApiBearerAuth()
@@ -91,5 +92,26 @@ export class UserEventController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.userEventService.softRemove(id);
+  }
+
+  @Post(':id/sync-to-calendar')
+  @ApiOperation({ summary: 'Sync user event to Google Calendar' })
+  @ApiBody({ type: SyncToCalendarDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Event synced to Google Calendar successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Failed to sync - Invalid refresh token or event not found',
+  })
+  async syncToCalendar(
+    @Param('id') id: string,
+    @Body() syncDto: SyncToCalendarDto,
+  ) {
+    return await this.userEventService.syncToGoogleCalendar(
+      id,
+      syncDto.googleRefreshToken,
+    );
   }
 }

@@ -16,6 +16,7 @@ import { UserEventOfferingService } from '../user_event_offering/user_event_offe
 import { UpdateUserEventDto } from './dto/update-user-event.dto';
 import { UserService } from '../user/user.service';
 import { RitualService } from '../ritual/ritual.service';
+import { GoogleCalendarService } from '../auth/google/services/google-calendar.service';
 
 @Injectable()
 export class UserEventService extends BaseService<UserEvent> {
@@ -27,6 +28,7 @@ export class UserEventService extends BaseService<UserEvent> {
     private readonly userEventOfferingService: UserEventOfferingService,
     private readonly userService: UserService,
     private readonly ritualService: RitualService,
+    private readonly googleCalendarService: GoogleCalendarService,
   ) {
     super(userEventRepository, redisService);
   }
@@ -313,6 +315,64 @@ export class UserEventService extends BaseService<UserEvent> {
       await Promise.all(promises);
       this.logger.log(
         `Optimized update completed: ${promises.length} operations`,
+      );
+    }
+  }
+
+  /**
+   * Sync user event to Google Calendar
+   */
+  async syncToGoogleCalendar(
+    eventId: string,
+    googleRefreshToken: string,
+  ): Promise<any> {
+    const event = await this.findOne(eventId, ['user']);
+    if (!event) {
+      throw new BadRequestException('Event not found');
+    }
+
+    try {
+      // Build Google Calendar event
+      const eventDate = new Date(event.eventDate);
+      const endDate = new Date(eventDate.getTime() + 60 * 60 * 1000); // +1 hour
+
+      const calendarEvent = {
+        summary: event.title,
+        description: event.description,
+        location: event.location,
+        start: {
+          dateTime: eventDate.toISOString(),
+          timeZone: 'Asia/Ho_Chi_Minh',
+        },
+        end: {
+          dateTime: endDate.toISOString(),
+          timeZone: 'Asia/Ho_Chi_Minh',
+        },
+      };
+
+      // Create event in Google Calendar
+      const result = await this.googleCalendarService.createEvent(
+        googleRefreshToken,
+        'primary',
+        calendarEvent,
+      );
+
+      this.logger.log(
+        `Event ${eventId} synced to Google Calendar: ${result.id}`,
+      );
+
+      return {
+        success: true,
+        message: 'Event synced to Google Calendar successfully',
+        googleEventId: result.id,
+        googleEventLink: result.htmlLink,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to sync event ${eventId} to Google Calendar: ${error.message}`,
+      );
+      throw new BadRequestException(
+        `Failed to sync to Google Calendar: ${error.message}`,
       );
     }
   }

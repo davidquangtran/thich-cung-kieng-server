@@ -130,6 +130,19 @@ export class AuthController {
       path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
     });
+
+    // Set Google refresh token in cookie for calendar access
+    const googleRefreshToken = (req as any).user?.refreshToken;
+    if (googleRefreshToken) {
+      res.cookie('googleRefreshToken', googleRefreshToken, {
+        httpOnly: true,
+        secure: this.configService.get<string>('NODE_ENV') === 'production',
+        sameSite: 'none',
+        path: '/',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+    }
+
     res.setHeader(
       'Access-Control-Allow-Origin',
       this.configService.get<string>('server.clientUrl') ||
@@ -239,5 +252,43 @@ export class AuthController {
     res.json({
       accessToken: tokens.accessToken,
     });
+  }
+
+  @Get('google-calendar-token')
+  @ApiOperation({
+    summary: 'Get Google Calendar refresh token',
+    description:
+      'Get the Google refresh token for calendar access from cookies',
+  })
+  @ApiOkResponse({
+    description: 'Google refresh token retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        googleRefreshToken: {
+          type: 'string',
+          example: '1//0g...',
+          description: 'Use this token to sync events to Google Calendar',
+        },
+      },
+    },
+  })
+  @ApiBadRequestResponse({
+    description:
+      'Google refresh token not found. Please login via Google again.',
+  })
+  async getGoogleCalendarToken(@Req() req: Request) {
+    const googleRefreshToken = req.cookies['googleRefreshToken'];
+
+    if (!googleRefreshToken) {
+      throw new BadRequestException(
+        'Google refresh token not found. Please login via Google again to grant calendar access.',
+      );
+    }
+
+    return {
+      googleRefreshToken,
+      message: 'Use this token in the sync-to-calendar endpoint',
+    };
   }
 }

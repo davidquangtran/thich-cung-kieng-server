@@ -25,7 +25,6 @@ export class GoogleAuthGuard extends AuthGuard('google') {
       options.loginHint = email;
       options.prompt = 'select_account';
     }
-
     return options;
   }
 }
