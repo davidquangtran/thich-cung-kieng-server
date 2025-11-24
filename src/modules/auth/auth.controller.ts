@@ -254,6 +254,7 @@ export class AuthController {
     });
   }
 
+  @Public()
   @Get('google-calendar-token')
   @ApiOperation({
     summary: 'Get Google Calendar refresh token',
