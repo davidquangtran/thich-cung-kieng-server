@@ -7,7 +7,10 @@ import {
   Delete,
   Query,
   Put,
+  Req,
+  UnauthorizedException,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { UserEventService } from './user-event.service';
 import { UpdateUserEventDto } from './dto/update-user-event.dto';
 import { CreateUserEventWithRelationshipDto } from './dto/create-user-event-with-relationship.dto';
@@ -24,7 +27,6 @@ import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { FilterUserEvent } from './dto/filter-user-event.dto';
 import { User } from '../user/entities/user.entity';
 import { UserRole } from 'src/common/enums/user.enum';
-import { SyncToCalendarDto } from './dto/sync-to-calendar.dto';
 
 @Controller('user-event')
 @ApiBearerAuth()
@@ -103,7 +105,6 @@ export class UserEventController {
 
   @Post(':id/sync-to-calendar')
   @ApiOperation({ summary: 'Sync user event to Google Calendar' })
-  @ApiBody({ type: SyncToCalendarDto })
   @ApiResponse({
     status: 200,
     description: 'Event synced to Google Calendar successfully',
@@ -112,13 +113,23 @@ export class UserEventController {
     status: 400,
     description: 'Failed to sync - Invalid refresh token or event not found',
   })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Google refresh token not found in cookies',
+  })
   async syncToCalendar(
     @Param('id') id: string,
-    @Body() syncDto: SyncToCalendarDto,
+    @Req() req: Request,
   ) {
+    const googleRefreshToken = req.cookies?.googleRefreshToken;
+    
+    if (!googleRefreshToken) {
+      throw new UnauthorizedException('Google refresh token not found in cookies');
+    }
+
     return await this.userEventService.syncToGoogleCalendar(
       id,
-      syncDto.googleRefreshToken,
+      googleRefreshToken,
     );
   }
 }
