@@ -68,10 +68,3 @@ export class RegisterRequestDto {
 
 // Alias for backward compatibility
 export class RegisterReqDto extends RegisterRequestDto {}
-  @IsString()
-  profilePicture: string;
-
-  constructor(partial: Partial<RegisterReqDto>) {
-    Object.assign(this, partial);
-  }
-}
