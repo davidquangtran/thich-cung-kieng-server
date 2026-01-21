@@ -8,6 +8,7 @@ import { UserEventReminderModule } from '../user_event_reminder/user_event_remin
 import { UserEventOfferingModule } from '../user_event_offering/user_event_offering.module';
 import { UserModule } from '../user/user.module';
 import { RitualModule } from '../ritual/ritual.module';
+import { GoogleCalendarService } from '../auth/google/services/google-calendar.service';
 
 @Module({
   imports: [
@@ -16,10 +17,10 @@ import { RitualModule } from '../ritual/ritual.module';
     UserEventReminderModule,
     UserEventOfferingModule,
     UserModule,
-    RitualModule
+    RitualModule,
   ],
   controllers: [UserEventController],
-  providers: [UserEventService],
+  providers: [UserEventService, GoogleCalendarService],
   exports: [UserEventService],
 })
 export class UserEventModule {}
