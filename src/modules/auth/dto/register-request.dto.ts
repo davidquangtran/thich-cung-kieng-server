@@ -23,12 +23,19 @@ export class RegisterRequestDto {
   @MinLength(6)
   password: string;
 
-  @ApiProperty({ example: 'Nguyễn Văn A', description: 'Full name of the user' })
+  @ApiProperty({
+    example: 'Nguyễn Văn A',
+    description: 'Full name of the user',
+  })
   @IsString()
   @IsOptional()
   fullName?: string;
 
-  @ApiProperty({ example: '1990-01-01', description: 'Birthday of the user', required: false })
+  @ApiProperty({
+    example: '1990-01-01',
+    description: 'Birthday of the user',
+    required: false,
+  })
   @Type(() => Date)
   @IsDate()
   @IsOptional()
@@ -37,7 +44,7 @@ export class RegisterRequestDto {
   @ApiProperty({
     example: '+1234567890',
     description: 'Phone number of the user',
-    required: false
+    required: false,
   })
   @IsString()
   @IsOptional()

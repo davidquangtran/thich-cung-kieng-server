@@ -7,6 +7,8 @@ import {
   Req,
   Res,
   BadRequestException,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -107,6 +109,7 @@ export class AuthController {
 
   @Public()
   @Post('login')
+  @HttpCode(HttpStatus.OK) // 200 instead of 201
   @ApiOperation({
     summary: 'Login with email and password',
     description: 'Authenticate user with email and password credentials',
