@@ -10,21 +10,31 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
   app.use(cookieParser());
+  
+  // CORS configuration
+  const isProduction = configService.get<string>('NODE_ENV') === 'production';
+  const allowedOrigins = [
+    configService.get<string>('server.clientUrl') || 'http://localhost:3000',
+    'http://localhost:3000',
+    'http://localhost:5000',
+    'https://thich-cung-kieng-server.onrender.com', // Server domain for Swagger
+  ];
+
   app.enableCors({
     origin: (
       origin: string | undefined,
       callback: (err: Error | null, allow?: boolean) => void,
     ) => {
-      const allowedOrigins = [
-        configService.get<string>('server.clientUrl') || 'http://localhost:3000',
-        'http://localhost:3000',
-        'http://localhost:5000',
-      ];
-      // Allow requests with no origin (like Postman, mobile apps, or same-origin)
+      // Allow requests with no origin (Postman, mobile apps, same-origin, Swagger)
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        // In development, allow all origins for testing
+        if (!isProduction) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
       }
     },
     credentials: true,
