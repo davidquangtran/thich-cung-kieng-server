@@ -20,6 +20,7 @@ async function bootstrap() {
         'http://localhost:3000',
         'http://localhost:5000',
       ];
+      // Allow requests with no origin (like Postman, mobile apps, or same-origin)
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -27,6 +28,11 @@ async function bootstrap() {
       }
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    exposedHeaders: ['Set-Cookie'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   });
 
   app.useGlobalPipes(
