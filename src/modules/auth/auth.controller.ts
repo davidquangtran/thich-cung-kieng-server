@@ -24,6 +24,8 @@ import { GoogleAuthGuard } from './google/guards/google-auth.guard';
 import { GoogleLoginDto } from './google/dto/google-auth.dto';
 import { SubscriptionCheckService } from './services/subscription-check.service';
 import { UserSubscriptionStatus } from 'src/common/enums/user-subscription.enum';
+import { LoginRequestDto } from './dto/login-request.dto';
+import { RegisterRequestDto } from './dto/register-request.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -33,6 +35,147 @@ export class AuthController {
     private readonly configService: ConfigService,
     private readonly subscriptionCheckService: SubscriptionCheckService,
   ) {}
+
+  @Public()
+  @Post('register')
+  @ApiOperation({
+    summary: 'Register with email and password',
+    description: 'Create a new user account with email and password',
+  })
+  @ApiBody({
+    type: RegisterRequestDto,
+    description: 'User registration data',
+  })
+  @ApiOkResponse({
+    description: 'Registration successful',
+    schema: {
+      type: 'object',
+      properties: {
+        accessToken: {
+          type: 'string',
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+        },
+        refreshToken: {
+          type: 'string',
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+        },
+        user: {
+          type: 'object',
+          properties: {
+            userId: {
+              type: 'string',
+              example: 'c2adc0a6-7af6-4484-8ae0-72349d78e769',
+            },
+            email: { type: 'string', example: 'user@example.com' },
+            fullName: { type: 'string', example: 'John Doe' },
+            role: { type: 'string', example: 'USER' },
+          },
+        },
+      },
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Email already exists or validation failed',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Email already exists' },
+      },
+    },
+  })
+  async register(
+    @Body() registerDto: RegisterRequestDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const response = await this.authService.register(registerDto);
+
+    // Set cookie for refresh token
+    res.cookie('refreshToken', response.tokens.refreshToken, {
+      httpOnly: true,
+      secure: this.configService.get<string>('NODE_ENV') === 'production',
+      sameSite: 'none',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    return {
+      accessToken: response.tokens.accessToken,
+      refreshToken: response.tokens.refreshToken,
+      subscription: response.subscription,
+    };
+  }
+
+  @Public()
+  @Post('login')
+  @ApiOperation({
+    summary: 'Login with email and password',
+    description: 'Authenticate user with email and password credentials',
+  })
+  @ApiBody({
+    type: LoginRequestDto,
+    description: 'User login credentials',
+  })
+  @ApiOkResponse({
+    description: 'Login successful',
+    schema: {
+      type: 'object',
+      properties: {
+        accessToken: {
+          type: 'string',
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+        },
+        refreshToken: {
+          type: 'string',
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+        },
+        user: {
+          type: 'object',
+          properties: {
+            userId: {
+              type: 'string',
+              example: 'c2adc0a6-7af6-4484-8ae0-72349d78e769',
+            },
+            email: { type: 'string', example: 'user@example.com' },
+            fullName: { type: 'string', example: 'John Doe' },
+            role: { type: 'string', example: 'USER' },
+          },
+        },
+      },
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid credentials',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Invalid email or password' },
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Authentication failed',
+  })
+  async login(
+    @Body() loginDto: LoginRequestDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const response = await this.authService.login(loginDto);
+
+    // Set cookie for refresh token
+    res.cookie('refreshToken', response.tokens.refreshToken, {
+      httpOnly: true,
+      secure: this.configService.get<string>('NODE_ENV') === 'production',
+      sameSite: 'none',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    return {
+      accessToken: response.tokens.accessToken,
+      refreshToken: response.tokens.refreshToken,
+      subscription: response.subscription,
+    };
+  }
 
   @Public()
   @Get('google')

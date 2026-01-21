@@ -13,6 +13,9 @@ import { GoogleLoginDto } from './google/dto/google-auth.dto';
 import { MailService } from 'src/shared/mail/mail.service';
 import { SubscriptionCheckService } from './services/subscription-check.service';
 import { LoginWithSubscriptionResponse } from './interfaces/subscription-check.interface';
+import * as bcrypt from 'bcrypt';
+import { LoginRequestDto } from './dto/login-request.dto';
+import { RegisterRequestDto } from './dto/register-request.dto';
 
 @Injectable()
 export class AuthService {
@@ -245,5 +248,156 @@ export class AuthService {
       ...tokens,
       subscription: subscriptionInfo,
     } as any;
+  }
+
+  /**
+   * Register a new user with email and password
+   * @param registerDto User registration data
+   * @returns JWT tokens for the new user
+   */
+  async register(
+    registerDto: RegisterRequestDto,
+  ): Promise<LoginWithSubscriptionResponse> {
+    // Check if user already exists
+    const existingUser = await this.usersService.findOneByOptions({
+      email: registerDto.email,
+    });
+
+    if (existingUser) {
+      throw new BadRequestException('Email already exists');
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+
+    // Create new user
+    const newUser = await this.usersService.create(
+      new User({
+        email: registerDto.email,
+        fullName: registerDto.fullName,
+        password: hashedPassword,
+      }),
+    );
+
+    // Send welcome email
+    this.mailService.sendWelcomeEmail({
+      email: newUser.email,
+      name: newUser.fullName || 'User',
+    });
+
+    // Check user subscription
+    let subscriptionInfo: any = null;
+    try {
+      subscriptionInfo =
+        await this.subscriptionCheckService.checkUserSubscriptionOnLogin(
+          newUser.id,
+        );
+    } catch (error) {
+      console.warn('Failed to check subscription on register:', error.message);
+    }
+
+    const subscriptionSummary = {
+      hasSubscription: subscriptionInfo?.hasActiveSubscription || false,
+      status: subscriptionInfo?.subscriptionStatus,
+      planName: subscriptionInfo?.subscriptionDetails?.plan?.name,
+      daysRemaining: subscriptionInfo?.subscriptionDetails?.daysRemaining,
+    };
+
+    // Generate tokens
+    const payload: JwtPayload = {
+      sub: newUser.id,
+      email: newUser.email,
+      role: newUser.role,
+      subscription: subscriptionSummary,
+    };
+
+    const tokens = await this.getTokens(payload);
+
+    // Update refresh token
+    await this.usersService.updateField(
+      newUser.id,
+      'refreshToken',
+      tokens.refreshToken,
+    );
+
+    return {
+      tokens,
+      subscription: subscriptionInfo,
+    };
+  }
+
+  /**
+   * Login with email and password
+   * @param loginDto User login credentials
+   * @returns JWT tokens for authenticated user
+   */
+  async login(
+    loginDto: LoginRequestDto,
+  ): Promise<LoginWithSubscriptionResponse> {
+    // Find user by email
+    const user = await this.usersService.findOneByOptions({
+      email: loginDto.email,
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    // Check if user has a password (might be Google-only account)
+    if (!user.password) {
+      throw new UnauthorizedException(
+        'This account uses Google login. Please sign in with Google.',
+      );
+    }
+
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(
+      loginDto.password,
+      user.password,
+    );
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    // Check user subscription
+    let subscriptionInfo: any = null;
+    try {
+      subscriptionInfo =
+        await this.subscriptionCheckService.checkUserSubscriptionOnLogin(
+          user.id,
+        );
+    } catch (error) {
+      console.warn('Failed to check subscription on login:', error.message);
+    }
+
+    const subscriptionSummary = {
+      hasSubscription: subscriptionInfo?.hasActiveSubscription || false,
+      status: subscriptionInfo?.subscriptionStatus,
+      planName: subscriptionInfo?.subscriptionDetails?.plan?.name,
+      daysRemaining: subscriptionInfo?.subscriptionDetails?.daysRemaining,
+    };
+
+    // Generate tokens
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      subscription: subscriptionSummary,
+    };
+
+    const tokens = await this.getTokens(payload);
+
+    // Update refresh token
+    await this.usersService.updateField(
+      user.id,
+      'refreshToken',
+      tokens.refreshToken,
+    );
+
+    return {
+      tokens,
+      subscription: subscriptionInfo,
+    };
   }
 }

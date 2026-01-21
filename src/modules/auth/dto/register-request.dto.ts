@@ -10,7 +10,7 @@ import {
 import { Type } from 'class-transformer';
 import { UserRole } from 'src/common/enums/user.enum';
 
-export class RegisterReqDto {
+export class RegisterRequestDto {
   @ApiProperty({
     example: 'thichcungkieng@gmail.com',
     description: 'Email of the user',
@@ -23,17 +23,25 @@ export class RegisterReqDto {
   @MinLength(6)
   password: string;
 
-  @ApiProperty({ example: '1990-01-01', description: 'Birthday of the user' })
+  @ApiProperty({ example: 'Nguyễn Văn A', description: 'Full name of the user' })
+  @IsString()
+  @IsOptional()
+  fullName?: string;
+
+  @ApiProperty({ example: '1990-01-01', description: 'Birthday of the user', required: false })
   @Type(() => Date)
   @IsDate()
-  birthday: Date;
+  @IsOptional()
+  birthday?: Date;
 
   @ApiProperty({
     example: '+1234567890',
     description: 'Phone number of the user',
+    required: false
   })
   @IsString()
-  phone: string;
+  @IsOptional()
+  phone?: string;
 
   @ApiProperty({
     description: 'User role in the system',
@@ -49,6 +57,17 @@ export class RegisterReqDto {
     example: 'https://example.com/profile.jpg',
     description: 'Profile picture URL of the user',
   })
+  @IsString()
+  @IsOptional()
+  profilePicture?: string;
+
+  constructor(partial: Partial<RegisterRequestDto>) {
+    Object.assign(this, partial);
+  }
+}
+
+// Alias for backward compatibility
+export class RegisterReqDto extends RegisterRequestDto {}
   @IsString()
   profilePicture: string;
 
